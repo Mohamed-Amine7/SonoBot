@@ -1,0 +1,616 @@
+<!-- ==========================================
+     Intelligent E-commerce Chatbot Widget
+     ==========================================
+     Paste this complete code block into a Joomla "Custom HTML" module or
+     directly before the </body> tag in your Joomla template's index.php file.
+-->
+
+<!-- Include Google Fonts for Premium Typography -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+<!-- Chatbot Markup -->
+<div id="shopbot-widget">
+    <!-- Floating Launcher Trigger Button -->
+    <button id="shopbot-launcher" aria-label="Open Chatbot">
+        <svg class="launcher-icon-chat" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path
+                d="M20 2H4C2.9 2 2 2.9 2 4V22L6 18H20C21.1 18 22 17.1 22 16V4C22 2.9 21.1 2 20 2ZM20 16H5.2L4 17.2V4H20V16Z"
+                fill="currentColor" />
+            <circle cx="8" cy="10" r="1.5" fill="currentColor" />
+            <circle cx="12" cy="10" r="1.5" fill="currentColor" />
+            <circle cx="16" cy="10" r="1.5" fill="currentColor" />
+        </svg>
+        <svg class="launcher-icon-close" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path
+                d="M19 6.41L17.59 5L12 10.59L6.41 5L5 6.41L10.59 12L5 17.59L6.41 19L12 13.41L17.59 19L19 17.59L13.41 12L19 6.41Z"
+                fill="currentColor" />
+        </svg>
+    </button>
+
+    <!-- Main Chat Window Panel -->
+    <div id="shopbot-container" class="shopbot-hidden">
+        <!-- Header Section -->
+        <div class="shopbot-header">
+            <div class="shopbot-avatar-container">
+                <div class="shopbot-avatar">
+                    <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path
+                            d="M12 2C6.48 2 2 6.48 2 12C2 17.52 6.48 22 12 22C17.52 22 22 17.52 22 12C22 6.48 17.52 2 12 2ZM12 6C13.66 6 15 7.34 15 9C15 10.66 13.66 12 12 12C10.34 12 9 10.66 9 9C9 7.34 10.34 6 12 6ZM12 20.2C9.58 20.2 7.42 18.96 6.13 17.07C6.17 15.12 10.13 14.05 12 14.05C13.86 14.05 17.82 15.12 17.87 17.07C16.58 18.96 14.42 20.2 12 20.2Z"
+                            fill="currentColor" />
+                    </svg>
+                    <span class="shopbot-status-dot"></span>
+                </div>
+                <div class="shopbot-header-text">
+                    <h3>ShopBot</h3>
+                    <p>AI Shopping Assistant</p>
+                </div>
+            </div>
+            <button id="shopbot-close" aria-label="Close Chat">&times;</button>
+        </div>
+
+        <!-- Message Logs Box -->
+        <div id="shopbot-messages" class="shopbot-messages">
+            <!-- Messages are injected here dynamically by JavaScript -->
+        </div>
+
+        <!-- Typing Indicator -->
+        <div id="shopbot-typing" class="shopbot-typing shopbot-hidden">
+            <span class="typing-dot"></span>
+            <span class="typing-dot"></span>
+            <span class="typing-dot"></span>
+        </div>
+
+        <!-- Input Area Section -->
+        <div class="shopbot-input-area">
+            <input type="text" id="shopbot-input" placeholder="Ask about products, prices..." autocomplete="off">
+            <button id="shopbot-send" aria-label="Send Message">
+                <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M2.01 21L23 12L2.01 3L2 10L17 12L2 14L2.01 21Z" fill="currentColor" />
+                </svg>
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Styling Sheet -->
+<style>
+    /* CSS Variables for Clean Theming */
+    :root {
+        --sb-primary-gradient: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+        --sb-primary-color: #4f46e5;
+        --sb-bg-main: rgba(255, 255, 255, 0.95);
+        --sb-bg-header: linear-gradient(135deg, #1e1b4b 0%, #312e81 100%);
+        --sb-text-dark: #1f2937;
+        --sb-text-light: #f9fafb;
+        --sb-text-muted: #6b7280;
+        --sb-border-color: rgba(229, 231, 235, 0.8);
+        --sb-user-bubble: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+        --sb-bot-bubble: #f3f4f6;
+        --sb-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+        --sb-transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    #shopbot-widget {
+        font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        position: fixed !important;
+        bottom: 24px !important;
+        right: 24px !important;
+        z-index: 2147483647 !important;
+        /* Ensure chatbot sits on top of all Joomla layout layers */
+        display: flex;
+        flex-direction: column;
+        align-items: flex-end;
+        width: auto !important;
+        height: auto !important;
+        pointer-events: none;
+    }
+
+    /* Launcher Button */
+    #shopbot-launcher {
+        width: 60px;
+        height: 60px;
+        border-radius: 50%;
+        background: var(--sb-primary-gradient);
+        color: white;
+        border: none;
+        cursor: pointer;
+        box-shadow: 0 4px 14px rgba(79, 70, 229, 0.4);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: var(--sb-transition);
+        position: fixed !important;
+        right: 24px !important;
+        bottom: 24px !important;
+        pointer-events: auto;
+    }
+
+    #shopbot-launcher:hover {
+        transform: scale(1.08) rotate(5deg);
+        box-shadow: 0 6px 20px rgba(79, 70, 229, 0.6);
+    }
+
+    #shopbot-launcher svg {
+        width: 26px;
+        height: 26px;
+        position: absolute;
+        transition: var(--sb-transition);
+    }
+
+    #shopbot-launcher .launcher-icon-close {
+        opacity: 0;
+        transform: scale(0.5);
+    }
+
+    #shopbot-launcher.active .launcher-icon-chat {
+        opacity: 0;
+        transform: scale(0.5);
+    }
+
+    #shopbot-launcher.active .launcher-icon-close {
+        opacity: 1;
+        transform: scale(1);
+    }
+
+    /* Chat Window Panel */
+    #shopbot-container {
+        width: 380px;
+        height: 520px;
+        max-height: 80vh;
+        position: fixed !important;
+        right: 24px !important;
+        bottom: 100px !important;
+        background: var(--sb-bg-main);
+        backdrop-filter: blur(16px);
+        -webkit-backdrop-filter: blur(16px);
+        border: 1px solid var(--sb-border-color);
+        border-radius: 20px;
+        box-shadow: var(--sb-shadow);
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+        margin-bottom: 16px;
+        transition: opacity 0.3s cubic-bezier(0.16, 1, 0.3, 1), transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+        transform-origin: bottom right;
+        pointer-events: auto;
+    }
+
+    #shopbot-container.shopbot-hidden {
+        opacity: 0;
+        transform: scale(0.8) translateY(40px);
+        pointer-events: none;
+    }
+
+    /* Header */
+    .shopbot-header {
+        background: var(--sb-bg-header);
+        color: var(--sb-text-light);
+        padding: 16px 20px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .shopbot-avatar-container {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+
+    .shopbot-avatar {
+        width: 40px;
+        height: 40px;
+        background: rgba(255, 255, 255, 0.15);
+        border-radius: 50%;
+        color: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        position: relative;
+    }
+
+    .shopbot-avatar svg {
+        width: 24px;
+        height: 24px;
+    }
+
+    .shopbot-status-dot {
+        width: 10px;
+        height: 10px;
+        background: #10b981;
+        /* Green status dot */
+        border: 2px solid #1e1b4b;
+        border-radius: 50%;
+        position: absolute;
+        bottom: 0;
+        right: 0;
+        animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+        0% {
+            transform: scale(0.95);
+            box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7);
+        }
+
+        70% {
+            transform: scale(1);
+            box-shadow: 0 0 0 5px rgba(16, 185, 129, 0);
+        }
+
+        100% {
+            transform: scale(0.95);
+            box-shadow: 0 0 0 0 rgba(16, 185, 129, 0);
+        }
+    }
+
+    .shopbot-header-text h3 {
+        margin: 0;
+        font-size: 16px;
+        font-weight: 600;
+        letter-spacing: 0.3px;
+        color: white;
+        line-height: 1.2;
+    }
+
+    .shopbot-header-text p {
+        margin: 2px 0 0 0;
+        font-size: 11px;
+        color: #a5b4fc;
+        line-height: 1.2;
+    }
+
+    #shopbot-close {
+        background: none;
+        border: none;
+        color: rgba(255, 255, 255, 0.7);
+        font-size: 24px;
+        cursor: pointer;
+        line-height: 1;
+        transition: var(--sb-transition);
+    }
+
+    #shopbot-close:hover {
+        color: white;
+        transform: scale(1.1);
+    }
+
+    /* Chat Messages Area */
+    .shopbot-messages {
+        flex: 1;
+        padding: 20px;
+        overflow-y: auto;
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        background-color: #fafafa;
+    }
+
+    /* Custom Scrollbar for messages */
+    .shopbot-messages::-webkit-scrollbar {
+        width: 6px;
+    }
+
+    .shopbot-messages::-webkit-scrollbar-track {
+        background: transparent;
+    }
+
+    .shopbot-messages::-webkit-scrollbar-thumb {
+        background: #e5e7eb;
+        border-radius: 3px;
+    }
+
+    /* Chat Bubbles */
+    .sb-message {
+        max-width: 88%;
+        padding: 12px 16px;
+        border-radius: 16px;
+        font-size: 13px;
+        line-height: 1.5;
+        white-space: pre-line;
+        overflow-wrap: break-word;
+        animation: bubbleFadeIn 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+
+    @keyframes bubbleFadeIn {
+        from {
+            opacity: 0;
+            transform: translateY(10px) scale(0.96);
+        }
+
+        to {
+            opacity: 1;
+            transform: translateY(0) scale(1);
+        }
+    }
+
+    .sb-message-user {
+        align-self: flex-end;
+        background: var(--sb-user-bubble);
+        color: white;
+        border-bottom-right-radius: 4px;
+        box-shadow: 0 4px 10px rgba(37, 99, 235, 0.15);
+    }
+
+    .sb-message-bot {
+        align-self: flex-start;
+        background: var(--sb-bot-bubble);
+        color: var(--sb-text-dark);
+        border-bottom-left-radius: 4px;
+        border: 1px solid var(--sb-border-color);
+        font-weight: 500;
+    }
+
+    /* Typing Indicator Styling */
+    .shopbot-typing {
+        align-self: flex-start;
+        margin-left: 20px;
+        margin-bottom: 12px;
+        padding: 10px 16px;
+        background: var(--sb-bot-bubble);
+        border: 1px solid var(--sb-border-color);
+        border-radius: 16px;
+        border-bottom-left-radius: 4px;
+        display: flex;
+        gap: 4px;
+    }
+
+    .shopbot-typing.shopbot-hidden {
+        display: none !important;
+    }
+
+    .typing-dot {
+        width: 6px;
+        height: 6px;
+        background-color: var(--sb-text-muted);
+        border-radius: 50%;
+        animation: typingBounce 1.4s infinite ease-in-out both;
+    }
+
+    .typing-dot:nth-child(1) {
+        animation-delay: -0.32s;
+    }
+
+    .typing-dot:nth-child(2) {
+        animation-delay: -0.16s;
+    }
+
+    @keyframes typingBounce {
+
+        0%,
+        80%,
+        100% {
+            transform: scale(0);
+        }
+
+        40% {
+            transform: scale(1.0);
+        }
+    }
+
+    /* Input Area */
+    .shopbot-input-area {
+        padding: 14px 16px;
+        border-top: 1px solid var(--sb-border-color);
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        background: white;
+    }
+
+    #shopbot-input {
+        flex: 1;
+        border: 1px solid var(--sb-border-color);
+        border-radius: 24px;
+        padding: 10px 16px;
+        font-size: 13.5px;
+        outline: none;
+        transition: var(--sb-transition);
+    }
+
+    #shopbot-input:focus {
+        border-color: var(--sb-primary-color);
+        box-shadow: 0 0 0 2px rgba(79, 70, 229, 0.15);
+    }
+
+    #shopbot-send {
+        width: 38px;
+        height: 38px;
+        border-radius: 50%;
+        background: var(--sb-primary-gradient);
+        color: white;
+        border: none;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: var(--sb-transition);
+    }
+
+    #shopbot-send:hover {
+        transform: scale(1.05);
+    }
+
+    #shopbot-send svg {
+        width: 18px;
+        height: 18px;
+        margin-left: 2px;
+        /* Center-adjust the paper plane icon */
+    }
+
+    /* Responsive adjustment for Mobile Screen Sizes */
+    @media (max-width: 480px) {
+        #shopbot-widget {
+            right: 12px !important;
+            bottom: 12px !important;
+        }
+
+        #shopbot-container {
+            width: calc(100vw - 24px);
+            height: 480px;
+            right: 12px !important;
+            bottom: 88px !important;
+        }
+
+        #shopbot-launcher {
+            right: 12px !important;
+            bottom: 12px !important;
+        }
+    }
+</style>
+
+<!-- Script Logic -->
+<script>
+    function initShopBotWidget() {
+        // Change to false to disable the chatbot without deleting the code from Joomla.
+        const SHOPBOT_ENABLED = true;
+
+        // API config (Update IP if Flask is hosted on server, default localhost)
+        const API_URL = "http://localhost:5000/api/chat";
+
+        // UI Elements
+        const widget = document.getElementById("shopbot-widget");
+        const launcher = document.getElementById("shopbot-launcher");
+        const container = document.getElementById("shopbot-container");
+        const closeBtn = document.getElementById("shopbot-close");
+        const messageBox = document.getElementById("shopbot-messages");
+        const chatInput = document.getElementById("shopbot-input");
+        const sendBtn = document.getElementById("shopbot-send");
+        const typingIndicator = document.getElementById("shopbot-typing");
+
+        if (!SHOPBOT_ENABLED) {
+            widget.remove();
+            return;
+        }
+
+        // Joomla templates can wrap modules in transformed/sticky containers.
+        // Moving the widget to <body> keeps fixed positioning relative to the viewport.
+        if (widget.parentElement !== document.body) {
+            document.body.appendChild(widget);
+        }
+
+        // Toggle Chat Visibility
+        launcher.addEventListener("click", () => {
+            const isOpen = !container.classList.contains("shopbot-hidden");
+            if (isOpen) {
+                closeChat();
+            } else {
+                openChat();
+            }
+        });
+
+        closeBtn.addEventListener("click", closeChat);
+
+        function openChat() {
+            container.classList.remove("shopbot-hidden");
+            launcher.classList.add("active");
+            chatInput.focus();
+            scrollToBottom();
+        }
+
+        function closeChat() {
+            container.classList.add("shopbot-hidden");
+            launcher.classList.remove("active");
+        }
+
+        // Handle Sending Messages
+        sendBtn.addEventListener("click", handleSendMessage);
+        chatInput.addEventListener("keypress", (e) => {
+            if (e.key === "Enter") {
+                handleSendMessage();
+            }
+        });
+
+        function handleSendMessage() {
+            const text = chatInput.value.trim();
+            if (!text) return;
+
+            // Display user message in chat
+            addMessage(text, "user");
+            chatInput.value = "";
+
+            // Show typing indicator
+            showTyping(true);
+
+            // API Request using fetch
+            fetch(API_URL, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({ message: text })
+            })
+                .then(async response => {
+                    if (!response.ok) {
+                        let errMsg = "API Connection Failed";
+                        try {
+                            const errJson = await response.json();
+                            if (errJson && errJson.response) {
+                                errMsg = errJson.response;
+                            } else if (errJson && errJson.error) {
+                                errMsg = errJson.error;
+                            }
+                        } catch (e) { }
+                        throw new Error(errMsg);
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    showTyping(false);
+                    if (data && data.response) {
+                        addMessage(data.response, "bot");
+                    } else {
+                        addMessage("I'm sorry, I received an unexpected response structure.", "bot");
+                    }
+                })
+                .catch(error => {
+                    showTyping(false);
+                    console.error("Chatbot Error:", error);
+                    // If the error is standard fetch failure, it might be "Failed to fetch" (server offline or CORS issue)
+                    let displayMsg = error.message;
+                    if (displayMsg === "Failed to fetch" || displayMsg.includes("network")) {
+                        displayMsg = "Could not connect to Flask API (http://localhost:5000). Ensure Flask server is running.";
+                    } else {
+                        displayMsg = "Error: " + displayMsg;
+                    }
+                    addMessage(displayMsg, "bot");
+                });
+        }
+
+        function addMessage(text, sender) {
+            const msgDiv = document.createElement("div");
+            msgDiv.classList.add("sb-message", `sb-message-${sender}`);
+            msgDiv.textContent = text;
+            messageBox.appendChild(msgDiv);
+
+            scrollToBottom();
+        }
+
+        function showTyping(show) {
+            if (show) {
+                typingIndicator.classList.remove("shopbot-hidden");
+                // Move typing indicator to the bottom of the container
+                messageBox.appendChild(typingIndicator);
+            } else {
+                typingIndicator.classList.add("shopbot-hidden");
+            }
+            scrollToBottom();
+        }
+
+        function scrollToBottom() {
+            messageBox.scrollTop = messageBox.scrollHeight;
+        }
+
+        // Initialize Widget
+        addMessage("Hi! I'm ShopBot. How can I help you find products, check prices, or view stock updates today?", "bot");
+    }
+
+    if (document.readyState === "loading") {
+        document.addEventListener("DOMContentLoaded", initShopBotWidget);
+    } else {
+        initShopBotWidget();
+    }
+</script>
