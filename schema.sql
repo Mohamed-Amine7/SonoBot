@@ -14,11 +14,15 @@ CREATE TABLE `products` (
   `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
--- Dumping sample data for table `products`
+-- Sample data: SonoLight professional lighting & DJ equipment
 INSERT INTO `products` (`name`, `description`, `price`, `stock`, `category`) VALUES
-('Veloce Running Shoes', 'Lightweight and breathable athletic running shoes with advanced shock absorption and ergonomic design. Perfect for marathons or casual daily jogs.', 89.99, 45, 'Footwear'),
-('AeroFlow Active T-Shirt', 'Moisture-wicking athletic fit shirt made from recycled polyester. Keeps you cool and dry during intense workouts.', 29.99, 120, 'Apparel'),
-('Summit Explorer Backpack', 'Durable water-resistant 40L outdoor travel backpack. Features multiple compartments, a laptop sleeve, and comfortable padded shoulder straps.', 74.50, 18, 'Accessories'),
-('SonicBeats Wireless Earbuds', 'True wireless Bluetooth 5.2 earbuds with active noise cancellation, sweat resistance, and a 24-hour battery life charging case.', 59.99, 65, 'Electronics'),
-('FlexiCore Yoga Mat', 'Extra-thick 6mm non-slip exercise yoga mat with carrying strap. Made from eco-friendly, non-toxic TPE material.', 35.00, 30, 'Fitness'),
-('HydraPeak Stainless Water Bottle', 'Double-wall vacuum insulated water flask (32 oz). Keeps beverages cold for 24 hours or hot for 12 hours.', 24.95, 85, 'Accessories');
+('Beam 230W 7R Moving Head', 'Lyre Beam motorisée 230W avec prisme rotatif, gobos et effets stroboscopiques. Idéale pour clubs et concerts.', 2500.00, 12, 'Moving Heads'),
+('LED Par 18x18W RGBWA+UV', 'Projecteur LED Par slim 6-en-1 avec DMX512, parfait pour éclairage de scène et ambiance événementielle.', 450.00, 35, 'Éclairage LED'),
+('Laser RGB 5W Animation', 'Laser d''animation multicolore 5W avec contrôle ILDA et DMX. Effets laser spectaculaires pour shows et discothèques.', 3800.00, 8, 'Lasers'),
+('Wash LED 36x18W RGBWA+UV', 'Lyre Wash LED haute puissance avec zoom 15-60°. Couverture large et mélange de couleurs fluide.', 1800.00, 15, 'Moving Heads'),
+('Flat Par 12x12W RGBWA+UV', 'Projecteur Par LED ultra-plat avec batterie rechargeable et contrôle sans fil. Parfait pour mariages et événements.', 350.00, 50, 'Éclairage LED'),
+('Machine à Fumée 3000W DMX', 'Machine à fumée professionnelle avec sortie verticale et contrôle DMX. Effet brouillard dense pour scènes et clubs.', 1200.00, 20, 'Effets Spéciaux'),
+('Spider LED 8x12W RGBW', 'Effet araignée LED motorisé à faisceaux multiples. Mouvements rapides et effets dynamiques pour pistes de danse.', 750.00, 25, 'Effets Spéciaux'),
+('Waterproof Par 18x18W IP65', 'Projecteur LED étanche IP65 pour événements extérieurs. Résistant à la pluie et à la poussière.', 650.00, 18, 'Éclairage Extérieur'),
+('Contrôleur DMX 512 Pro', 'Console DMX 512 canaux avec écran tactile et interface intuitive. Compatible avec tous les appareils DMX.', 900.00, 30, 'Accessoires'),
+('Follow Spot 330W', 'Poursuite professionnelle 330W avec iris, gobos et variation de couleurs. Portée jusqu''à 50 mètres.', 2200.00, 6, 'Éclairage Scénique');

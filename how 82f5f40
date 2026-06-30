@@ -1,0 +1,30 @@
+[33mcommit 82f5f400ad479b36e6a92bf4a2d6b81b3eb7409d[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmain[m[33m)[m
+Author: MOAMINE777 <nouailmohamedamine9@gmail.com>
+Date:   Tue Jun 30 11:01:16 2026 +0000
+
+    Chatbot updated
+
+.env
+.gitignore
+__pycache__/ai.cpython-313.pyc
+__pycache__/app.cpython-313.pyc
+__pycache__/catalog.cpython-313.pyc
+__pycache__/config.cpython-313.pyc
+__pycache__/db.cpython-313.pyc
+__pycache__/guide.cpython-313.pyc
+__pycache__/utils.cpython-313.pyc
+ai.py
+app.py
+catalog.py
+chatbot.code-workspace
+chatbot_joomla.html
+config.py
+db.py
+guide.py
+requirements.txt
+schema.sql
+tests/__pycache__/test_guide.cpython-313-pytest-9.1.1.pyc
+tests/__pycache__/test_utils.cpython-313-pytest-9.1.1.pyc
+tests/test_guide.py
+tests/test_utils.py
+utils.py
