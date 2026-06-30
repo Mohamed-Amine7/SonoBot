@@ -1,4 +1,18 @@
-.env
-__pycache__/
-*.pyc
+# Virtual environment
 .venv/
+
+# Environment variables
+.env
+
+# Python cache
+__pycache__/
+*.py[cod]
+
+# Pytest cache
+.pytest_cache/
+
+# VS Code
+.vscode/
+
+# Workspace
+*.code-workspace
