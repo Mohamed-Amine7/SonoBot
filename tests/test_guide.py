@@ -2,11 +2,6 @@
 Tests for SonoBot guide & direct catalog response logic.
 """
 
-import sys
-import os
-
-# Add project root to path so imports work
-sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from utils import has_arabic, normalize_text
 from guide import is_guide_trigger
@@ -24,6 +19,7 @@ class TestIsGuideTrigger:
     def test_english_help_phrases(self):
         assert is_guide_trigger("help me choose") is True
         assert is_guide_trigger("I'm not sure what to pick") is True
+        assert is_guide_trigger("Show me something good for a party") is True
 
     def test_keyword_triggers(self):
         assert is_guide_trigger("des suggestions ?") is True
@@ -35,8 +31,7 @@ class TestIsGuideTrigger:
         assert is_guide_trigger("prix du laser") is False
 
     def test_no_trigger_on_arabic(self):
-        """Arabic messages should not trigger the guide (AI handles them)."""
-        assert is_guide_trigger("ساعدني نختار") is False
+        assert is_guide_trigger("ساعدني نختار") is True
         assert is_guide_trigger("واش عندكم شي اقتراح") is False
 
 

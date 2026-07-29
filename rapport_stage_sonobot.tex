@@ -1,0 +1,323 @@
+% Rapport de stage - SonoBot
+% Compiler avec : pdflatex rapport_stage_sonobot.tex (deux fois)
+% Les champs marques "A COMPLETER" doivent etre personnalises avant depot.
+\documentclass[12pt,a4paper,oneside]{report}
+
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[french]{babel}
+\usepackage{lmodern}
+\usepackage{microtype}
+\usepackage[a4paper,margin=2.5cm,headheight=15pt]{geometry}
+\usepackage{xcolor}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{tabularx}
+\usepackage{array}
+\usepackage{enumitem}
+\usepackage{float}
+\usepackage{caption}
+\usepackage{setspace}
+\usepackage{fancyhdr}
+\usepackage{titlesec}
+\usepackage{tikz}
+\usetikzlibrary{arrows.meta,positioning,shapes.geometric}
+\usepackage[colorlinks=true,linkcolor=blue!50!black,urlcolor=blue!50!black]{hyperref}
+
+\definecolor{ensiasblue}{RGB}{0,84,147}
+\definecolor{lightblue}{RGB}{235,244,250}
+\setstretch{1.18}
+\setlength{\parskip}{0.45em}
+\setlist[itemize]{noitemsep,topsep=0.3em}
+\titleformat{\chapter}[display]{\bfseries\color{ensiasblue}\Huge}{Chapitre \thechapter}{0.4em}{}
+\titleformat{\section}{\bfseries\Large\color{ensiasblue}}{\thesection}{0.7em}{}
+\pagestyle{fancy}
+\fancyhf{}
+\lhead{\small\nouppercase{\leftmark}}
+\rhead{\small Rapport de stage -- SonoBot}
+\rfoot{\thepage}
+
+\newcommand{\project}{SonoBot : assistant virtuel intelligent pour SonoLight}
+\newcommand{\student}{MOHAMED AMINE -- \textit{à compléter si nécessaire}}
+\newcommand{\company}{SonoLight / Organisme d'accueil à compléter}
+
+\begin{document}
+
+% -----------------------------------------------------------------
+% Page de garde
+% -----------------------------------------------------------------
+\begin{titlepage}
+\centering
+{\large \textbf{Université Ibn Zohr}}\\[0.2cm]
+{\large \textbf{École Nationale Supérieure de l'Intelligence Artificielle et Sciences des Données -- Taroudant}}\\[0.8cm]
+\rule{\textwidth}{1.5pt}\\[1.1cm]
+{\Huge\bfseries RAPPORT DE STAGE}\\[0.35cm]
+{\Large Filière : Ingénierie Logicielle}\[1.3cm]
+\fcolorbox{ensiasblue}{lightblue}{\parbox{0.88\textwidth}{\centering\Large\bfseries \project}}\\[1.4cm]
+\begin{tabular}{rl}
+\textbf{Réalisé par :} & \student \\
+\textbf{Organisme d'accueil :} & \company \\
+\textbf{Encadrant professionnel :} & \textit{À compléter} \\
+\textbf{Encadrant pédagogique :} & \textit{À compléter} \\
+\textbf{Période de stage :} & \textit{À compléter} \\
+\textbf{Année universitaire :} & 2025--2026 \\
+\end{tabular}
+\vfill
+\rule{\textwidth}{1.5pt}\\[0.3cm]
+{\large Taroudant, Maroc}
+\end{titlepage}
+
+\pagenumbering{roman}
+\chapter*{Dédicace}
+\addcontentsline{toc}{chapter}{Dédicace}
+Je dédie ce travail à ma famille, à mes enseignants et à toutes les personnes qui ont contribué à ma formation et m'ont soutenu tout au long de ce parcours.
+
+\chapter*{Remerciements}
+\addcontentsline{toc}{chapter}{Remerciements}
+Je remercie sincèrement l'ensemble des personnes ayant participé au bon déroulement de ce stage. Mes remerciements s'adressent particulièrement à mon encadrant pédagogique et à mon encadrant professionnel pour leur disponibilité, leurs conseils et leur accompagnement. Je remercie également l'équipe de l'organisme d'accueil pour sa confiance et les conditions de travail mises à ma disposition.
+
+\chapter*{Résumé}
+\addcontentsline{toc}{chapter}{Résumé}
+Ce rapport présente la conception et le développement de \project, un assistant conversationnel destiné à une boutique marocaine d'équipements d'éclairage, de sonorisation et d'animation événementielle. L'objectif est d'améliorer l'expérience d'achat en fournissant des réponses contextualisées sur le catalogue, les prix, les stocks et les politiques commerciales.
+
+La solution repose sur une API REST développée avec Flask, une base de données MySQL et une interface web intégrable à Joomla. Elle combine une recherche dans le catalogue, un appel à un modèle de langage configurable et un parcours de recommandation guidée. Une attention particulière est portée à la fiabilité des informations, au multilinguisme, à la gestion des sessions et à la protection de l'API par limitation de débit.
+
+\textbf{Mots-clés :} chatbot, intelligence artificielle, e-commerce, Flask, MySQL, API REST, recommandation, Joomla.
+
+\chapter*{Abstract}
+\addcontentsline{toc}{chapter}{Abstract}
+This report presents the design and development of SonoBot, a conversational assistant for a Moroccan online store selling professional lighting, DJ equipment and stage effects. The solution provides contextual answers about products, prices, stock availability and store policies. It is based on a Flask REST API, a MySQL catalog and a web interface that can be integrated into Joomla. The system combines catalog retrieval, a configurable language-model provider and a guided recommendation flow.
+
+\tableofcontents
+\listoffigures
+\listoftables
+\clearpage
+\pagenumbering{arabic}
+
+\chapter{Présentation de l'organisme d'accueil et contexte}
+\section{Introduction}
+La transformation numérique du commerce impose aux entreprises de proposer une assistance rapide et accessible. Dans le domaine de l'événementiel, les clients recherchent souvent des informations précises sur la puissance, les effets, le prix ou la disponibilité d'un produit avant de finaliser leur achat. Ce stage s'inscrit dans cette problématique et vise à mettre l'intelligence artificielle au service de la relation client.
+
+\section{Organisme d'accueil}
+L'organisme d'accueil est à renseigner précisément avant la version finale du rapport. Dans le contexte du projet, SonoLight est une boutique e-commerce marocaine spécialisée dans l'éclairage professionnel, les équipements DJ, les lasers et les effets scéniques. Son catalogue peut être alimenté par une base MySQL propre à l'application ou par les données d'une boutique Joomla utilisant HikaShop.
+
+\begin{table}[H]
+\centering
+\caption{Fiche signalétique à personnaliser}
+\begin{tabularx}{\textwidth}{>{\bfseries}l X}
+\toprule
+Élément & Information \\
+\midrule
+Raison sociale & À compléter \\
+Secteur d'activité & E-commerce et équipements événementiels \\
+Adresse & À compléter \\
+Encadrant professionnel & À compléter \\
+Site web / contact & À compléter \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+\section{Problématique}
+Un catalogue riche ne garantit pas à lui seul une expérience d'achat fluide. Les utilisateurs peuvent hésiter entre plusieurs références, ne pas savoir quel équipement correspond à leur événement ou solliciter le service client pour des questions répétitives. Une réponse imprécise concernant le prix ou le stock peut en outre détériorer la confiance du client.
+
+La problématique retenue est donc la suivante : \emph{comment fournir une assistance conversationnelle utile, rapide et fiable, tout en s'appuyant sur les données réelles du catalogue e-commerce ?}
+
+\section{Objectifs du stage}
+Les objectifs fonctionnels et techniques fixés sont les suivants :
+\begin{itemize}
+  \item concevoir un assistant capable de répondre aux questions courantes sur les produits ;
+  \item connecter l'assistant au catalogue afin de transmettre des données actualisées ;
+  \item orienter les clients indécis grâce à un parcours de recommandation ;
+  \item prendre en charge le français, l'anglais, l'arabe et la darija selon le message du client ;
+  \item proposer une architecture modulaire, sécurisée et intégrable dans un site Joomla.
+\end{itemize}
+
+\section{Méthodologie de travail}
+Le travail a été conduit de manière itérative : analyse du besoin, étude de l'existant, réalisation de l'API, intégration de l'intelligence artificielle, développement de l'interface puis tests. Cette approche permet d'obtenir rapidement un premier flux fonctionnel et de l'améliorer par étapes.
+
+\chapter{Analyse et spécification des besoins}
+\section{Acteurs du système}
+Le système met principalement en relation trois acteurs :
+\begin{itemize}
+  \item \textbf{le client}, qui consulte le catalogue et dialogue avec SonoBot ;
+  \item \textbf{l'administrateur de la boutique}, qui maintient les informations du catalogue ;
+  \item \textbf{le fournisseur de modèle de langage}, appelé par le serveur pour générer une réponse lorsque cela est pertinent.
+\end{itemize}
+
+\section{Besoins fonctionnels}
+Les besoins fonctionnels identifiés sont :
+\begin{enumerate}
+  \item recevoir un message utilisateur et renvoyer une réponse conversationnelle ;
+  \item rechercher des produits pertinents dans le catalogue ;
+  \item fournir les informations relatives aux catégories, au prix et au stock ;
+  \item préserver un historique limité par session ;
+  \item lancer un guide de choix en quatre étapes : événement, environnement, budget et effet recherché ;
+  \item afficher des recommandations ou des alternatives lorsque la correspondance exacte est absente ;
+  \item exposer un point de contrôle de disponibilité du service et du catalogue.
+\end{enumerate}
+
+\section{Besoins non fonctionnels}
+\begin{itemize}
+  \item \textbf{Fiabilité :} les réponses portant sur les articles doivent s'appuyer sur le contexte issu du catalogue ;
+  \item \textbf{Sécurité :} les paramètres SQL sont transmis séparément des requêtes et l'API est protégée par une limite de requêtes ;
+  \item \textbf{Maintenabilité :} les responsabilités sont séparées entre les modules de configuration, base de données, catalogue, IA et guide ;
+  \item \textbf{Interopérabilité :} l'API respecte un style REST et le composant web peut être intégré au site ;
+  \item \textbf{Ergonomie :} l'interface doit rester lisible sur ordinateur et mobile.
+\end{itemize}
+
+\section{Cas d'utilisation}
+\begin{figure}[H]
+\centering
+\begin{tikzpicture}[node distance=1.2cm, every node/.style={font=\small}, actor/.style={draw,rounded corners,fill=lightblue,minimum width=2.2cm,minimum height=.75cm}, usecase/.style={draw,ellipse,minimum width=3.5cm,minimum height=.7cm}]
+\node[actor] (client) {Client};
+\node[usecase,right=3cm of client,yshift=1.35cm] (chat) {Poser une question};
+\node[usecase,right=3cm of client] (guide) {Suivre le guide de choix};
+\node[usecase,right=3cm of client,yshift=-1.35cm] (catalog) {Consulter une recommandation};
+\draw[-{Stealth}] (client)--(chat);
+\draw[-{Stealth}] (client)--(guide);
+\draw[-{Stealth}] (client)--(catalog);
+\end{tikzpicture}
+\caption{Principales interactions entre le client et SonoBot}
+\end{figure}
+
+\chapter{Conception de la solution}
+\section{Architecture générale}
+L'application adopte une organisation en couches. L'interface transmet les requêtes à l'API Flask. Celle-ci décide si une réponse peut être construite directement depuis le catalogue ou si une génération par modèle de langage est nécessaire. Dans le second cas, les informations pertinentes du catalogue sont injectées dans les instructions envoyées au fournisseur IA.
+
+Cette approche est une \emph{génération augmentée par contexte de catalogue}. Elle ne doit pas être confondue avec une architecture RAG vectorielle : le projet utilise une recherche textuelle et des données relationnelles, sans index vectoriel ni base d'embeddings.
+
+\begin{figure}[H]
+\centering
+\begin{tikzpicture}[node distance=1cm and 1.2cm, every node/.style={font=\small}, block/.style={draw,rounded corners,align=center,fill=lightblue,minimum width=2.75cm,minimum height=.9cm}, db/.style={draw,cylinder,shape border rotate=90,aspect=.25,align=center,fill=gray!15,minimum width=2cm,minimum height=1.1cm}]
+\node[block] (ui) {Interface web\\Joomla / React};
+\node[block,right=of ui] (api) {API Flask\\routes REST};
+\node[db,right=of api] (db) {MySQL\\Catalogue};
+\node[block,below=of api] (logic) {Guide, recherche\\et sessions};
+\node[block,right=of logic] (llm) {Fournisseur IA\\configurable};
+\draw[-{Stealth}] (ui)--node[above]{HTTPS / JSON}(api);
+\draw[-{Stealth}] (api)--(db);
+\draw[-{Stealth}] (api)--(logic);
+\draw[-{Stealth}] (logic)--(llm);
+\draw[-{Stealth}] (llm)--(logic);
+\end{tikzpicture}
+\caption{Architecture fonctionnelle de SonoBot}
+\end{figure}
+
+\section{Organisation du code}
+Le code source est séparé en modules cohérents :
+\begin{table}[H]
+\centering
+\caption{Rôle des principaux modules}
+\begin{tabularx}{\textwidth}{>{\ttfamily}l X}
+\toprule
+Module & Responsabilité \\
+\midrule
+app.py & Initialisation de Flask et définition des routes HTTP. \\
+ai.py & Client compatible OpenAI, gestion des sessions et construction des instructions. \\
+catalog.py & Adaptation aux sources de catalogue et recherche des produits. \\
+guide.py & Déclenchement du guide et filtrage des recommandations. \\
+db.py & Pool de connexions et exécution centralisée des requêtes. \\
+config.py & Chargement des paramètres d'environnement et configuration des fournisseurs. \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+\section{Modèle de données}
+Le projet normalise les données issues de la source e-commerce sous une forme commune. Les champs essentiels sont l'identifiant, le nom, la description, le prix, le stock et la catégorie. Cette abstraction permet de travailler soit avec une table de démonstration, soit avec les tables d'un catalogue HikaShop.
+
+\section{Conception des échanges API}
+Les routes principales sont présentées dans le tableau suivant.
+\begin{table}[H]
+\centering
+\caption{Interfaces REST principales}
+\begin{tabularx}{\textwidth}{>{\ttfamily}l l X}
+\toprule
+Route & Méthode & Rôle \\
+\midrule
+/api/health & GET & Vérifie que le service est démarré. \\
+/api/catalog/status & GET & Retourne l'état et les métadonnées de la connexion catalogue. \\
+/api/chat & POST & Reçoit le message et retourne la réponse de l'assistant. \\
+/api/guide & POST & Fait avancer le parcours de recommandation. \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+\chapter{Réalisation}
+\section{Backend Flask}
+Flask constitue le point d'entrée de l'application. La route \texttt{/api/chat} valide le corps de la requête, détecte un éventuel besoin d'accompagnement, tente une réponse directe pour les questions simples, puis recherche des produits avant d'appeler le composant IA. Les réponses sont échangées au format JSON, ce qui simplifie l'intégration avec une interface web.
+
+\section{Recherche dans le catalogue}
+Le module \texttt{catalog.py} fournit une couche d'accès indépendante de la source de données. Il sait déterminer le fournisseur actif, construire les requêtes adaptées et normaliser les résultats. La recherche prend en compte les informations disponibles dans le nom, la catégorie et la description afin de proposer un contexte produit utile au modèle de langage.
+
+\section{Assistant conversationnel}
+Le composant \texttt{ai.py} utilise une interface compatible avec l'API OpenAI. Selon la configuration, il peut cibler OpenAI, Mistral, Groq, OpenRouter ou Gemini. Les clés et paramètres sont chargés depuis l'environnement, ce qui évite de les écrire dans le code source.
+
+Le message système impose notamment les règles suivantes : adapter la langue de la réponse au client, s'appuyer sur les informations du catalogue, ne pas inventer de prix ou de produits et orienter l'utilisateur vers le support lorsque l'information manque. Le système conserve un historique borné par identifiant de session et supprime périodiquement les sessions inactives.
+
+\section{Guide de recommandation}
+Lorsqu'un client ne sait pas quel produit choisir, le module \texttt{guide.py} propose un questionnaire en quatre étapes :
+\begin{enumerate}
+  \item type d'événement ;
+  \item environnement intérieur ou extérieur ;
+  \item budget ;
+  \item effet recherché.
+\end{enumerate}
+Les critères obtenus servent à filtrer les produits. En l'absence de correspondance exacte, l'application fournit une sélection de repli et invite le client à demander davantage de détails.
+
+\section{Interface utilisateur}
+Le projet comprend une interface web moderne développée avec React et Vite, ainsi qu'un fichier HTML prêt à intégrer dans Joomla. Les composants organisent l'en-tête, les messages et le profil visuel du chatbot. Cette séparation permet de faire évoluer la présentation sans modifier la logique métier du serveur.
+
+\section{Sécurité et robustesse}
+Plusieurs mécanismes contribuent à la robustesse de l'application :
+\begin{itemize}
+  \item limitation du nombre de requêtes par adresse IP avec \texttt{Flask-Limiter} ;
+  \item contrôle des origines autorisées avec \texttt{Flask-CORS} ;
+  \item validation des données d'entrée, en particulier du message utilisateur ;
+  \item connexions MySQL mutualisées et requêtes paramétrées ;
+  \item séparation des secrets dans le fichier d'environnement non versionné.
+\end{itemize}
+
+\chapter{Tests, bilan et perspectives}
+\section{Stratégie de test}
+Des tests unitaires sont prévus dans le répertoire \texttt{tests}. Ils ciblent notamment les fonctions utilitaires et le mécanisme de recommandation guidée. Pour la validation fonctionnelle, les scénarios suivants doivent être rejoués avec un catalogue accessible :
+\begin{itemize}
+  \item question sur le prix d'un produit existant ;
+  \item question sur la disponibilité d'un produit ;
+  \item recherche par catégorie ;
+  \item déclenchement et complétion du guide de recommandation ;
+  \item message dans chacune des langues prises en charge ;
+  \item absence de connexion à la base ou de clé IA.
+\end{itemize}
+
+\section{Bilan}
+Le projet a permis de réaliser une base fonctionnelle d'assistant e-commerce spécialisée. La solution relie l'intelligence conversationnelle à des données structurées et distingue les demandes nécessitant une génération IA de celles pouvant être satisfaites directement par le catalogue. Cette distinction améliore la rapidité des réponses simples et réduit les appels externes inutiles.
+
+Sur le plan personnel, ce stage a consolidé des compétences en développement Python, conception d'API REST, gestion de base de données, intégration de modèles de langage, sécurité applicative et développement d'interfaces web.
+
+\section{Limites}
+Les réponses générées dépendent de la qualité et de l'exhaustivité du catalogue transmis au modèle. La mémoire des conversations est actuellement conservée en mémoire du processus, ce qui convient à un prototype mais doit évoluer pour un déploiement distribué. Enfin, les règles de recommandation peuvent être enrichies par des données produit plus structurées et des retours d'usage réels.
+
+\section{Perspectives}
+Les évolutions envisageables sont :
+\begin{itemize}
+  \item persister les sessions dans Redis ou une base dédiée ;
+  \item ajouter un tableau de bord pour analyser les questions et les taux de conversion ;
+  \item mettre en place une recherche sémantique avec embeddings lorsque le volume du catalogue le justifie ;
+  \item enrichir les filtres de recommandation et intégrer les préférences client ;
+  \item automatiser les tests d'intégration et le déploiement ;
+  \item ajouter un mécanisme de retour utilisateur afin d'évaluer la qualité des réponses.
+\end{itemize}
+
+\chapter*{Conclusion générale}
+\addcontentsline{toc}{chapter}{Conclusion générale}
+Ce stage a abouti à la conception et au développement de SonoBot, un assistant virtuel orienté e-commerce. Le système répond à un besoin concret : accompagner le client tout en exploitant les informations disponibles dans le catalogue. L'architecture modulaire mise en place facilite son évolution et son intégration à la boutique existante. Au-delà de la réalisation technique, ce travail montre l'intérêt d'associer des modèles de langage à des données métiers contrôlées afin d'offrir une assistance plus fiable et plus pertinente.
+
+\begin{thebibliography}{9}
+\bibitem{flask} Pallets. \textit{Documentation Flask}. \url{https://flask.palletsprojects.com/}.
+\bibitem{mysql} Oracle. \textit{MySQL Reference Manual}. \url{https://dev.mysql.com/doc/}.
+\bibitem{openai} OpenAI. \textit{API Documentation}. \url{https://platform.openai.com/docs/}.
+\bibitem{react} Meta. \textit{React Documentation}. \url{https://react.dev/}.
+\bibitem{uml} P. Roques. \textit{UML 2 par la pratique}. Eyrolles, 2018.
+\end{thebibliography}
+
+\end{document}

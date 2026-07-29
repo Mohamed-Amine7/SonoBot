@@ -1,0 +1,27 @@
+<!-- ============================================================
+     SonoBot React Widget — Joomla Custom HTML Module
+     
+     Instructions d'installation :
+     1. Copiez les fichiers dist/sonobot.js et dist/sonobot.css
+        dans le dossier /media/sonobot/ de votre site Joomla.
+        (Créez le dossier s'il n'existe pas)
+     
+     2. Collez ce code complet dans un module Joomla "Custom HTML"
+        - Désactivez l'option "Préparer le contenu" (Prepare Content)
+        - Positionnez le module sur "debug" ou "footer"
+        - Publiez le module sur toutes les pages
+     
+     3. Assurez-vous que votre serveur Flask tourne sur le port 5000
+============================================================ -->
+
+<!-- CSS du chatbot -->
+<link rel="stylesheet" href="/media/sonobot/sonobot.css">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+<!-- Conteneur React -->
+<div id="root"></div>
+
+<!-- JS du chatbot (chargé en dernier) -->
+<script src="/media/sonobot/sonobot.js"></script>

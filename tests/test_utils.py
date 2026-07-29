@@ -2,13 +2,8 @@
 Tests for SonoBot text utilities.
 """
 
-import sys
-import os
 
-# Add project root to path so imports work
-sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-
-from utils import normalize_text, normalize_search_key, extract_keywords, extract_product_keywords, has_arabic
+from utils import normalize_text, normalize_search_key, extract_keywords, extract_product_keywords, has_arabic, detect_language
 
 
 class TestNormalizeText:
@@ -49,6 +44,17 @@ class TestHasArabic:
 
     def test_empty(self):
         assert has_arabic("") is False
+
+
+class TestDetectLanguage:
+    def test_english(self):
+        assert detect_language("Show me something good for a party") == "en"
+
+    def test_arabic(self):
+        assert detect_language("ساعدني أختار منتجًا للحفلة") == "ar"
+
+    def test_french_fallback(self):
+        assert detect_language("Aidez-moi à choisir") == "fr"
 
 
 class TestExtractKeywords:

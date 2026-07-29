@@ -4,7 +4,6 @@ Product search, category listing, and result formatting using the database layer
 """
 
 import logging
-import os
 
 import mysql.connector
 
@@ -60,6 +59,7 @@ def catalog_select_sql(cursor):
             SELECT
                 p.product_name AS name,
                 p.product_description AS description,
+                COALESCE(p.product_code, '') AS reference,
                 COALESCE(MIN(pr.price_value), 0) AS price,
                 CASE
                     WHEN p.product_quantity < 0 THEN 999999
@@ -96,7 +96,7 @@ def catalog_group_order_sql():
 
 def catalog_search_condition_sql():
     if get_catalog_provider() == "hikashop":
-        return "(p.product_name LIKE %s OR p.product_description LIKE %s OR c.category_name LIKE %s)"
+        return "(p.product_name LIKE %s OR p.product_description LIKE %s OR c.category_name LIKE %s OR p.product_code LIKE %s)"
 
     return "(name LIKE %s OR description LIKE %s OR category LIKE %s)"
 
@@ -118,20 +118,23 @@ def search_database(user_message):
 
             if keywords:
                 conditions = []
+                is_hikashop = get_catalog_provider() == "hikashop"
                 for word in keywords:
                     conditions.append(catalog_search_condition_sql())
                     pattern = f"%{word}%"
-                    params.extend([pattern, pattern, pattern])
+                    if is_hikashop:
+                        params.extend([pattern, pattern, pattern, pattern])
+                    else:
+                        params.extend([pattern, pattern, pattern])
                 base_query += " AND (" + " OR ".join(conditions) + ")"
 
             query = base_query + catalog_group_order_sql() + " LIMIT %s"
             cursor.execute(query, [*params, 10 if keywords else 5])
             products = cursor.fetchall()
 
-            if keywords and not products:
-                query = catalog_select_sql(cursor) + catalog_group_order_sql() + " LIMIT %s"
-                cursor.execute(query, [3])
-                products = cursor.fetchall()
+            # Do not fall back to arbitrary catalogue entries when the request
+            # has meaningful keywords but none match.  That made questions such
+            # as "something good for a party" look like random recommendations.
 
     except mysql.connector.Error as err:
         logger.error("Database Error in search_database: %s", err)
@@ -160,6 +163,7 @@ def fetch_product_matches(user_message, limit=8):
                         """
                         MAX(
                             CASE
+                                WHEN LOWER(p.product_code) LIKE %s THEN 10
                                 WHEN LOWER(p.product_name) LIKE %s THEN 5
                                 WHEN LOWER(c.category_name) LIKE %s THEN 2
                                 WHEN LOWER(p.product_description) LIKE %s THEN 1
@@ -168,11 +172,11 @@ def fetch_product_matches(user_message, limit=8):
                         )
                         """
                     )
-                    relevance_params.extend([pattern, pattern, pattern])
+                    relevance_params.extend([pattern, pattern, pattern, pattern])
                     where_parts.append(
-                        "(LOWER(p.product_name) LIKE %s OR LOWER(c.category_name) LIKE %s OR LOWER(p.product_description) LIKE %s)"
+                        "(LOWER(p.product_code) LIKE %s OR LOWER(p.product_name) LIKE %s OR LOWER(c.category_name) LIKE %s OR LOWER(p.product_description) LIKE %s)"
                     )
-                    where_params.extend([pattern, pattern, pattern])
+                    where_params.extend([pattern, pattern, pattern, pattern])
 
                 query = f"""
                     SELECT
@@ -323,8 +327,16 @@ def fetch_products_by_category(category, limit=100):
 
 
 def fetch_products(where_clause="", params=None, limit=10):
-    """Fetches catalog products for direct, fast answers that do not need AI."""
+    """Fetches catalog products for direct, fast answers that do not need AI.
+
+    Warning:
+        ``where_clause`` is interpolated into the SQL string.  All current
+        callers pass controlled literals, but never pass user input directly.
+    """
     params = params or []
+    # Safety cap: prevent accidental full-table scans on large catalogs
+    if limit is None:
+        limit = 10000
 
     try:
         with get_db_connection() as (_conn, cursor):
@@ -365,25 +377,40 @@ def fetch_products(where_clause="", params=None, limit=10):
 # ---------------------------------------------------------------------------
 
 
-def _stock_label(product):
+def _stock_label(product, language="fr"):
     stock_count = int(product["stock"] or 0)
+    labels = {
+        "en": ("available", "in stock", "out of stock"),
+        "ar": ("متوفر", "متوفر في المخزون", "غير متوفر"),
+    }
+    available, in_stock, unavailable = labels.get(language, ("disponible", "en stock", "rupture de stock"))
     if stock_count >= 999999:
-        return "disponible"
+        return available
     elif stock_count > 0:
-        return f"{stock_count} en stock"
+        return f"{stock_count} {in_stock}"
     else:
-        return "rupture de stock"
+        return unavailable
 
 
-def format_product_list(products, intro, group_by_category=False):
+def _price_label(product, language="fr"):
+    price = float(product.get("price", 0) or 0)
+    if price <= 0:
+        return {"en": "Price on request", "ar": "السعر عند الطلب"}.get(language, "Prix sur demande")
+    return f"{price:.2f} MAD"
+
+
+def format_product_list(products, intro, group_by_category=False, language="fr"):
     if products is None:
-        return "I cannot read the HikaShop catalog yet. Please check DB_NAME and JOOMLA_TABLE_PREFIX in the .env file."
+        return "Impossible de lire le catalogue HikaShop. Vérifiez DB_NAME et JOOMLA_TABLE_PREFIX dans le fichier .env."
 
     if not products:
-        return "I couldn't find matching products in the catalog right now."
+        return "Je n'ai pas trouvé de produits correspondants dans le catalogue pour le moment."
 
     def product_line(product):
-        return f"- {str(product['name']).strip()}: {product['price']:.2f} MAD ({_stock_label(product)})"
+        ref = product.get('reference', '')
+        ref_label = {"en": "Ref", "ar": "المرجع"}.get(language, "Réf")
+        ref_str = f" [{ref_label}: {ref}]" if ref else ""
+        return f"- {str(product['name']).strip()}{ref_str} : {_price_label(product, language)} ({_stock_label(product, language)})"
 
     lines = [intro]
 

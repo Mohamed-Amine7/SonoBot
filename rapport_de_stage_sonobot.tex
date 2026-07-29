@@ -1,0 +1,649 @@
+\documentclass[12pt,a4paper]{report}
+
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[french]{babel}
+\usepackage{geometry}
+\usepackage{setspace}
+\usepackage{graphicx}
+\usepackage{xcolor}
+\usepackage{hyperref}
+\usepackage{array}
+\usepackage{longtable}
+\usepackage{booktabs}
+\usepackage{enumitem}
+\usepackage{listings}
+\usepackage{titlesec}
+\usepackage{fancyhdr}
+
+\geometry{left=2.5cm,right=2.5cm,top=2.5cm,bottom=2.5cm}
+\onehalfspacing
+\hypersetup{
+    colorlinks=true,
+    linkcolor=blue!50!black,
+    urlcolor=blue!50!black,
+    citecolor=blue!50!black
+}
+
+\definecolor{codebg}{RGB}{248,248,248}
+\definecolor{codeframe}{RGB}{220,220,220}
+\definecolor{keywordblue}{RGB}{38,92,160}
+\definecolor{commentgreen}{RGB}{75,135,80}
+
+\lstdefinestyle{pythonstyle}{
+    backgroundcolor=\color{codebg},
+    frame=single,
+    rulecolor=\color{codeframe},
+    basicstyle=\ttfamily\small,
+    keywordstyle=\color{keywordblue}\bfseries,
+    commentstyle=\color{commentgreen},
+    stringstyle=\color{orange!70!black},
+    breaklines=true,
+    showstringspaces=false,
+    tabsize=4
+}
+
+\lstset{style=pythonstyle}
+
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{Rapport de stage}
+\fancyhead[R]{SonoBot}
+\fancyfoot[C]{\thepage}
+
+\titleformat{\chapter}[display]
+{\normalfont\huge\bfseries}{\chaptertitlename\ \thechapter}{20pt}{\Huge}
+
+\begin{document}
+
+\begin{titlepage}
+    \centering
+    \vspace*{1cm}
+    {\Large \textbf{Rapport de stage}}\\[1.5cm]
+    {\Huge \textbf{Conception et développement de SonoBot}}\\[0.4cm]
+    {\Large Assistant virtuel intelligent pour une boutique e-commerce}\\[1.5cm]
+
+    \rule{\textwidth}{0.5pt}\\[0.5cm]
+    {\large Projet réalisé autour de la boutique \textbf{SonoLight}}\\
+    {\large Éclairage professionnel, matériel DJ et effets scéniques}\\[0.5cm]
+    \rule{\textwidth}{0.5pt}\\[1.5cm]
+
+    \begin{tabular}{>{\bfseries}p{5cm}p{8cm}}
+        Réalisé par : & \textit{Votre nom et prénom} \\
+        Formation : & \textit{Votre formation} \\
+        Établissement : & \textit{Nom de l'établissement} \\
+        Organisme d'accueil : & \textit{SonoLight / Entreprise d'accueil} \\
+        Encadrant pédagogique : & \textit{Nom de l'encadrant} \\
+        Encadrant professionnel : & \textit{Nom de l'encadrant} \\
+        Période de stage : & \textit{Dates du stage} \\
+        Année universitaire : & \textit{2025--2026} \\
+    \end{tabular}
+
+    \vfill
+    {\large \today}
+\end{titlepage}
+
+\chapter*{Remerciements}
+\addcontentsline{toc}{chapter}{Remerciements}
+
+Je tiens à exprimer mes sincères remerciements à toutes les personnes qui m'ont accompagné durant la réalisation de ce stage. Je remercie particulièrement mon encadrant professionnel pour ses conseils, sa disponibilité et son suivi tout au long du projet. Je remercie également mon encadrant pédagogique pour son accompagnement méthodologique et ses remarques constructives.
+
+Ce stage m'a permis de mettre en pratique mes connaissances en développement web, en conception d'API, en bases de données et en intégration de solutions d'intelligence artificielle dans un contexte e-commerce réel.
+
+\chapter*{Résumé}
+\addcontentsline{toc}{chapter}{Résumé}
+
+Ce rapport présente la conception et le développement de \textbf{SonoBot}, un assistant virtuel intelligent destiné à accompagner les clients d'une boutique e-commerce marocaine spécialisée dans l'éclairage professionnel, le matériel DJ et les effets scéniques. Le projet répond à un besoin concret : automatiser une partie du support client, faciliter la recherche de produits et recommander des équipements adaptés aux besoins des utilisateurs.
+
+La solution repose sur une architecture web moderne composée d'un backend Python avec Flask, d'une base de données MySQL compatible avec un catalogue générique ou HikaShop/Joomla, d'un module d'intelligence artificielle multi-fournisseurs et d'une interface frontend React intégrable dans un site Joomla. Le système combine des réponses directes issues du catalogue et une approche de génération augmentée par récupération de données, afin de limiter les réponses inventées et d'améliorer la fiabilité des informations communiquées aux clients.
+
+\textbf{Mots-clés :} chatbot, Flask, React, MySQL, HikaShop, Joomla, intelligence artificielle, RAG, e-commerce, API REST.
+
+\tableofcontents
+\listoftables
+
+\chapter{Introduction générale}
+
+\section{Contexte du stage}
+
+L'évolution du commerce en ligne a profondément modifié la relation entre les clients et les boutiques. Les utilisateurs souhaitent obtenir rapidement des informations précises sur les produits, les prix, la disponibilité, les modes de paiement et la livraison. Dans le domaine du matériel d'éclairage professionnel et des équipements DJ, ce besoin est encore plus important, car les produits sont souvent techniques et nécessitent un accompagnement avant l'achat.
+
+Le projet \textbf{SonoBot} s'inscrit dans ce contexte. Il vise à fournir à la boutique SonoLight un assistant conversationnel capable de répondre aux questions fréquentes, de consulter le catalogue en temps réel et de guider les visiteurs vers les produits adaptés à leur usage.
+
+\section{Problématique}
+
+La problématique principale du stage peut être formulée ainsi :
+
+\begin{quote}
+Comment concevoir un assistant virtuel e-commerce capable de fournir des réponses fiables, contextualisées et rapides, tout en restant connecté au catalogue réel de la boutique ?
+\end{quote}
+
+Cette problématique implique plusieurs enjeux :
+
+\begin{itemize}
+    \item éviter les réponses incorrectes ou inventées concernant les produits ;
+    \item réduire le temps de réponse aux questions fréquentes ;
+    \item prendre en charge plusieurs langues utilisées par les clients ;
+    \item intégrer la solution dans un environnement web existant, notamment Joomla ;
+    \item sécuriser l'accès à l'API et limiter les abus.
+\end{itemize}
+
+\section{Objectifs du projet}
+
+Les objectifs principaux du projet sont :
+
+\begin{itemize}
+    \item développer une API backend permettant de traiter les messages des utilisateurs ;
+    \item connecter le chatbot à une base de données MySQL contenant les produits ;
+    \item intégrer un modèle d'intelligence artificielle pour générer des réponses naturelles ;
+    \item mettre en place un guide d'achat interactif en plusieurs étapes ;
+    \item créer une interface de chat moderne et intégrable dans Joomla ;
+    \item prévoir des mécanismes de sécurité, de configuration et de test.
+\end{itemize}
+
+\chapter{Présentation du projet SonoBot}
+
+\section{Présentation générale}
+
+SonoBot est un assistant conversationnel conçu pour la boutique SonoLight, spécialisée dans l'éclairage professionnel, les lasers, les lyres, les équipements DJ et le matériel événementiel. Le chatbot agit comme un assistant de vente disponible en ligne. Il peut répondre à des questions telles que :
+
+\begin{itemize}
+    \item Quels produits sont disponibles ?
+    \item Quel est le prix d'un produit ?
+    \item Combien de produits existent dans une catégorie ?
+    \item Quel matériel choisir pour un mariage, un concert ou un événement extérieur ?
+    \item Quels sont les modes de livraison ou de paiement ?
+\end{itemize}
+
+\section{Fonctionnalités principales}
+
+\begin{longtable}{p{4cm}p{10cm}}
+\toprule
+\textbf{Fonctionnalité} & \textbf{Description} \\
+\midrule
+Chat intelligent & Réponse aux messages des clients grâce à une API d'intelligence artificielle alimentée par les données du catalogue. \\
+Recherche catalogue & Recherche de produits par nom, description, catégorie, prix et stock. \\
+Guide d'achat & Parcours guidé en quatre étapes pour recommander des produits selon l'événement, l'environnement, le budget et l'effet recherché. \\
+Réponses directes & Réponses rapides sans appel IA pour les questions simples : catégories, stock, prix, disponibilité. \\
+Multilingue & Le prompt système impose une réponse dans la langue du client : français, anglais, arabe ou Darija. \\
+Intégration Joomla & Widget embarquable via un module HTML ou via un build React/Vite. \\
+Sécurité & CORS configurable, rate limiting, validation des requêtes et échappement HTML côté frontend. \\
+\bottomrule
+\end{longtable}
+
+\chapter{Analyse des besoins}
+
+\section{Besoins fonctionnels}
+
+Les besoins fonctionnels identifiés sont les suivants :
+
+\begin{itemize}
+    \item permettre à l'utilisateur d'envoyer une question depuis une fenêtre de chat ;
+    \item afficher une réponse claire, concise et adaptée au contexte ;
+    \item rechercher automatiquement les produits pertinents dans la base de données ;
+    \item retourner les informations de prix et de stock en dirham marocain ;
+    \item proposer un parcours de recommandation lorsque l'utilisateur hésite ;
+    \item conserver un historique de conversation par session ;
+    \item exposer un point de contrôle de santé de l'API ;
+    \item vérifier l'état de connexion au catalogue.
+\end{itemize}
+
+\section{Besoins non fonctionnels}
+
+Les besoins non fonctionnels concernent la qualité de la solution :
+
+\begin{itemize}
+    \item \textbf{Fiabilité :} ne pas inventer de prix, de produits ou de disponibilités.
+    \item \textbf{Performance :} éviter les appels IA lorsque la réponse peut venir directement de la base de données.
+    \item \textbf{Maintenabilité :} séparer les responsabilités dans plusieurs modules Python.
+    \item \textbf{Sécurité :} limiter les requêtes, valider les entrées et éviter l'injection HTML.
+    \item \textbf{Portabilité :} permettre la configuration par variables d'environnement.
+    \item \textbf{Intégration :} fournir une interface compatible avec Joomla et une version React moderne.
+\end{itemize}
+
+\chapter{Architecture technique}
+
+\section{Vue d'ensemble}
+
+L'architecture du projet est composée de trois grandes parties :
+
+\begin{itemize}
+    \item un backend Flask chargé d'exposer les API et d'orchestrer les traitements ;
+    \item une couche catalogue basée sur MySQL, compatible avec un catalogue générique ou HikaShop ;
+    \item une interface utilisateur sous forme de widget React ou de module HTML/JavaScript intégrable dans Joomla.
+\end{itemize}
+
+\section{Structure du projet}
+
+\begin{longtable}{p{5cm}p{9cm}}
+\toprule
+\textbf{Fichier ou dossier} & \textbf{Rôle} \\
+\midrule
+\texttt{app.py} & Point d'entrée Flask, routes API, CORS, rate limiting et health check. \\
+\texttt{config.py} & Chargement des variables d'environnement, configuration IA, base de données et sécurité. \\
+\texttt{db.py} & Gestion du pool de connexions MySQL et exécution de requêtes. \\
+\texttt{catalog.py} & Recherche, filtrage, listing et formatage des produits du catalogue. \\
+\texttt{ai.py} & Initialisation du client IA, prompt système, historique de sessions et appels aux modèles. \\
+\texttt{guide.py} & Guide conversationnel, détection d'intention et réponses directes liées au catalogue. \\
+\texttt{utils.py} & Fonctions de normalisation, extraction de mots-clés et détection de l'arabe. \\
+\texttt{frontend/} & Application React/Vite du widget SonoBot. \\
+\texttt{tests/} & Tests unitaires Pytest pour les utilitaires et la logique de guide. \\
+\texttt{chatbot\_joomla.html} & Version HTML/CSS/JavaScript autonome du widget. \\
+\bottomrule
+\end{longtable}
+
+\section{Flux de traitement d'un message}
+
+Lorsqu'un client écrit un message, le traitement se déroule ainsi :
+
+\begin{enumerate}
+    \item le frontend envoie une requête POST vers \texttt{/api/chat} avec le message et l'identifiant de session ;
+    \item le backend valide le contenu de la requête ;
+    \item le système vérifie si le message déclenche le guide d'achat ;
+    \item si la question est simple, une réponse directe est générée à partir du catalogue ;
+    \item sinon, les produits pertinents sont recherchés dans MySQL ;
+    \item le contexte produit est injecté dans le prompt système ;
+    \item l'API IA génère une réponse naturelle ;
+    \item le backend renvoie la réponse au widget.
+\end{enumerate}
+
+\chapter{Backend Flask}
+
+\section{Rôle de l'application Flask}
+
+Le fichier \texttt{app.py} constitue le point d'entrée du backend. Il initialise l'application Flask, configure CORS, applique une limitation de requêtes sur l'endpoint de chat et expose les routes nécessaires au fonctionnement de SonoBot.
+
+\section{Routes principales}
+
+\begin{longtable}{p{4cm}p{3cm}p{7cm}}
+\toprule
+\textbf{Route} & \textbf{Méthode} & \textbf{Description} \\
+\midrule
+\texttt{/api/health} & GET & Vérifie que le service Flask est opérationnel. \\
+\texttt{/api/chat} & POST & Reçoit le message utilisateur et renvoie une réponse du chatbot. \\
+\texttt{/api/guide} & POST & Gère les étapes du guide d'achat interactif. \\
+\texttt{/api/catalog/status} & GET & Retourne l'état de connexion au catalogue et des informations sur le fournisseur. \\
+\bottomrule
+\end{longtable}
+
+\section{Validation des requêtes}
+
+Le backend vérifie que chaque message reçu est bien une chaîne de caractères non vide. Cette validation évite les erreurs d'exécution et améliore la robustesse de l'API.
+
+\begin{lstlisting}[language=Python,caption={Validation simplifiée d'un message utilisateur}]
+data = request.get_json()
+if not data or "message" not in data:
+    return jsonify({"error": "Message parameter is missing"}), 400
+
+user_message = data["message"]
+if not isinstance(user_message, str) or not user_message.strip():
+    return jsonify({"error": "Message must be a non-empty string"}), 400
+\end{lstlisting}
+
+\section{Protection par rate limiting}
+
+La route \texttt{/api/chat} est protégée par \texttt{Flask-Limiter}. La limite par défaut est configurable avec la variable \texttt{RATE\_LIMIT}. Dans le projet, la valeur par défaut est \texttt{30/minute}. Ce mécanisme protège le service contre les abus et limite les coûts liés aux appels aux API d'intelligence artificielle.
+
+\chapter{Gestion de la configuration}
+
+\section{Variables d'environnement}
+
+Le fichier \texttt{config.py} centralise la configuration. Il charge un fichier \texttt{.env} s'il existe, puis définit les paramètres nécessaires :
+
+\begin{itemize}
+    \item informations de connexion MySQL ;
+    \item fournisseur de catalogue ;
+    \item clé API IA ;
+    \item fournisseur IA ;
+    \item paramètres Flask ;
+    \item limite de requêtes ;
+    \item taille de l'historique de conversation.
+\end{itemize}
+
+\section{Fournisseurs IA}
+
+Le projet est conçu pour fonctionner avec plusieurs fournisseurs :
+
+\begin{itemize}
+    \item OpenAI ;
+    \item Mistral AI ;
+    \item Groq ;
+    \item OpenRouter ;
+    \item Google Gemini via une interface compatible OpenAI.
+\end{itemize}
+
+Cette conception améliore la flexibilité du projet, car il est possible de changer de fournisseur en modifiant seulement la configuration.
+
+\chapter{Couche base de données et catalogue}
+
+\section{Connexion MySQL}
+
+La connexion à la base de données est gérée dans \texttt{db.py}. Le projet utilise un pool de connexions MySQL. Cette approche évite d'ouvrir une nouvelle connexion à chaque requête et améliore les performances.
+
+\begin{lstlisting}[language=Python,caption={Principe du pool de connexions MySQL}]
+_pool = pooling.MySQLConnectionPool(
+    pool_name="sonobot_pool",
+    pool_size=DB_POOL_SIZE,
+    pool_reset_session=True,
+    host=DB_HOST,
+    user=DB_USER,
+    password=DB_PASSWORD,
+    database=DB_NAME,
+    port=DB_PORT,
+)
+\end{lstlisting}
+
+\section{Compatibilité HikaShop et catalogue générique}
+
+Le fichier \texttt{catalog.py} permet d'utiliser deux types de catalogue :
+
+\begin{itemize}
+    \item un catalogue générique avec une table \texttt{products} ;
+    \item un catalogue HikaShop intégré à Joomla.
+\end{itemize}
+
+Dans le cas HikaShop, les requêtes SQL utilisent les tables de produits, prix, catégories et relations produit-catégorie. Le préfixe Joomla peut être configuré ou détecté automatiquement depuis la base.
+
+\section{Recherche de produits}
+
+La recherche repose sur l'extraction de mots-clés depuis le message utilisateur. Les mots non significatifs sont retirés, puis la recherche est effectuée dans le nom, la description et la catégorie des produits.
+
+Le système prévoit également une recherche par pertinence. Le nom du produit est plus fortement pondéré que la catégorie ou la description, ce qui permet de classer les résultats les plus probables en premier.
+
+\section{Formatage des résultats}
+
+Les produits sont transformés en réponses lisibles par le chatbot. Le système gère notamment :
+
+\begin{itemize}
+    \item l'affichage du prix en MAD ;
+    \item le cas d'un prix nul ou manquant avec la mention « Prix sur demande » ;
+    \item l'affichage du stock ;
+    \item le regroupement par catégorie.
+\end{itemize}
+
+\chapter{Intelligence artificielle et approche RAG}
+
+\section{Principe général}
+
+SonoBot utilise une approche proche du \textit{Retrieval-Augmented Generation}. Avant d'appeler le modèle IA, le backend récupère les produits pertinents depuis la base de données. Ces données sont ensuite injectées dans le prompt système afin que le modèle réponde à partir d'informations réelles.
+
+Cette approche permet de combiner :
+
+\begin{itemize}
+    \item la précision du catalogue ;
+    \item la souplesse du langage naturel ;
+    \item la capacité du modèle à expliquer, comparer et reformuler.
+\end{itemize}
+
+\section{Prompt système}
+
+Le prompt système définit le rôle du chatbot, les politiques de la boutique et les règles de réponse. Il impose notamment :
+
+\begin{itemize}
+    \item de répondre dans la même langue que le client ;
+    \item de ne pas inventer de produits ni de prix ;
+    \item de préciser les conditions de livraison, paiement et retour ;
+    \item de refuser poliment les questions hors sujet ;
+    \item de rester concis et professionnel.
+\end{itemize}
+
+\section{Gestion de l'historique}
+
+Le fichier \texttt{ai.py} conserve un historique par \texttt{session\_id}. L'historique est stocké en mémoire et protégé par un verrou \texttt{threading.Lock}. Cela permet au chatbot de tenir compte des messages précédents tout en limitant la mémoire utilisée.
+
+Les sessions expirées sont nettoyées périodiquement. Cette stratégie est simple et adaptée à un prototype ou à une première version de production légère.
+
+\section{Gestion des erreurs IA}
+
+Le système prévoit un mécanisme de réessai en cas d'erreur de type \texttt{429}. Il renvoie également des messages compréhensibles pour les erreurs de clé API, de modèle introuvable ou de connexion.
+
+\chapter{Guide d'achat interactif}
+
+\section{Objectif du guide}
+
+Le guide d'achat intervient lorsque l'utilisateur exprime une hésitation, par exemple : « aide moi à choisir », « je suis perdu » ou « quoi prendre ». L'objectif est de transformer une demande vague en critères exploitables pour rechercher des produits.
+
+\section{Étapes du guide}
+
+Le guide est composé de quatre étapes :
+
+\begin{enumerate}
+    \item type d'événement : mariage, concert, club, bar, extérieur ou studio ;
+    \item environnement : intérieur, extérieur ou les deux ;
+    \item budget : économique, moyen, haut de gamme ou libre ;
+    \item effet recherché : beam, wash, laser, LED, moving head ou tout type.
+\end{enumerate}
+
+\section{Recherche finale}
+
+À la fin du parcours, les critères sont convertis en termes de recherche. Par exemple, une demande extérieure ajoute des mots comme \texttt{waterproof} ou \texttt{IP65}. Les produits correspondants sont ensuite récupérés depuis le catalogue et formatés en recommandations.
+
+\chapter{Réponses directes sans IA}
+
+\section{Principe}
+
+Toutes les questions ne nécessitent pas un appel à un modèle IA. Pour optimiser les performances, le coût et le temps de réponse, le fichier \texttt{guide.py} contient une fonction \texttt{direct\_catalog\_response}. Elle détecte certaines intentions simples et répond directement depuis MySQL.
+
+\section{Exemples de cas traités}
+
+\begin{itemize}
+    \item salutation en français ;
+    \item liste des catégories ;
+    \item nombre total de produits ;
+    \item quantité disponible pour un produit ;
+    \item produits autour d'un prix donné ;
+    \item produits d'une catégorie spécifique ;
+    \item produits disponibles en stock.
+\end{itemize}
+
+\section{Avantages}
+
+Cette stratégie apporte plusieurs bénéfices :
+
+\begin{itemize}
+    \item temps de réponse réduit ;
+    \item baisse du nombre d'appels API IA ;
+    \item réponse plus déterministe pour les informations critiques ;
+    \item meilleure maîtrise des coûts.
+\end{itemize}
+
+\chapter{Frontend et intégration Joomla}
+
+\section{Application React}
+
+Le dossier \texttt{frontend/} contient une application React construite avec Vite. L'interface prend la forme d'un widget flottant placé en bas à droite de la page. Le visiteur peut ouvrir ou fermer le chat, envoyer un message, cliquer sur des actions rapides et interagir avec les boutons du guide.
+
+\section{Composants principaux}
+
+\begin{longtable}{p{5cm}p{9cm}}
+\toprule
+\textbf{Composant} & \textbf{Rôle} \\
+\midrule
+\texttt{App.jsx} & Gère l'état global du widget, les messages, les appels API et les interactions. \\
+\texttt{Header.jsx} & Affiche l'en-tête du chatbot avec l'avatar et le bouton de fermeture. \\
+\texttt{ProfileCard.jsx} & Présente SonoBot et les actions rapides : produits, prix, livraison. \\
+\texttt{Message.jsx} & Affiche les bulles utilisateur, les réponses bot, l'indicateur de saisie et les options du guide. \\
+\texttt{Icons.jsx} & Regroupe les icônes SVG utilisées dans l'interface. \\
+\texttt{markdown.js} & Convertit un sous-ensemble Markdown en HTML sécurisé pour les réponses du bot. \\
+\bottomrule
+\end{longtable}
+
+\section{Communication avec le backend}
+
+Le frontend communique avec :
+
+\begin{itemize}
+    \item \texttt{/api/chat} pour les messages libres ;
+    \item \texttt{/api/guide} pour les réponses du parcours guidé.
+\end{itemize}
+
+Un identifiant de session est généré côté navigateur afin de permettre au backend de conserver le contexte de conversation.
+
+\section{Intégration Joomla}
+
+Deux approches d'intégration sont présentes dans le projet :
+
+\begin{itemize}
+    \item une version autonome \texttt{chatbot\_joomla.html}, qui contient HTML, CSS et JavaScript dans un seul fichier ;
+    \item une version React/Vite, compilable avec des noms de fichiers fixes \texttt{sonobot.js} et \texttt{sonobot.css}, prévue pour être placée dans \texttt{/media/sonobot/}.
+\end{itemize}
+
+Le fichier \texttt{frontend/joomla\_module.html} décrit le code à placer dans un module Joomla de type HTML personnalisé.
+
+\chapter{Sécurité et qualité}
+
+\section{Mesures de sécurité}
+
+Plusieurs mesures ont été intégrées :
+
+\begin{itemize}
+    \item validation des messages entrants côté backend ;
+    \item limitation des requêtes par adresse IP ;
+    \item configuration CORS ;
+    \item requêtes SQL paramétrées pour les entrées utilisateur ;
+    \item échappement HTML côté frontend avant rendu Markdown ;
+    \item séparation des clés API et mots de passe dans le fichier \texttt{.env}.
+\end{itemize}
+
+\section{Limites identifiées}
+
+Certaines limites restent à prendre en compte :
+
+\begin{itemize}
+    \item l'historique des sessions est stocké en mémoire, donc il disparaît au redémarrage du serveur ;
+    \item le rate limiting utilise un stockage mémoire, moins adapté à un déploiement multi-instance ;
+    \item la détection de langue reste partiellement basée sur des règles simples ;
+    \item certaines informations de support, comme le téléphone exact, sont encore représentées par des placeholders.
+\end{itemize}
+
+\chapter{Tests et validation}
+
+\section{Tests unitaires}
+
+Le projet contient des tests Pytest dans le dossier \texttt{tests/}. Les tests vérifient principalement les fonctions utilitaires et la logique de détection du guide.
+
+\section{Éléments testés}
+
+\begin{itemize}
+    \item normalisation du texte ;
+    \item suppression des accents ;
+    \item normalisation des clés de recherche ;
+    \item détection des caractères arabes ;
+    \item extraction de mots-clés ;
+    \item déclenchement du guide d'achat ;
+    \item comportement des salutations françaises, anglaises et arabes.
+\end{itemize}
+
+\section{Validation fonctionnelle}
+
+La validation fonctionnelle consiste à tester plusieurs scénarios :
+
+\begin{itemize}
+    \item envoi d'une question simple sur les produits ;
+    \item recherche d'un produit par nom ;
+    \item demande de prix ;
+    \item déclenchement du guide par une phrase d'hésitation ;
+    \item choix successif des options du guide ;
+    \item affichage des recommandations finales ;
+    \item réponse à une question de livraison ou de paiement ;
+    \item vérification de la route \texttt{/api/health}.
+\end{itemize}
+
+\chapter{Difficultés rencontrées}
+
+\section{Fiabilité des réponses IA}
+
+L'un des principaux défis était d'éviter que l'IA invente des produits, des prix ou des caractéristiques. Pour cela, le projet limite le contexte fourni au modèle et précise dans le prompt que les réponses produit doivent s'appuyer uniquement sur les données du catalogue.
+
+\section{Compatibilité avec plusieurs catalogues}
+
+Le projet devait pouvoir fonctionner avec une table simple \texttt{products}, mais aussi avec HikaShop. Cette contrainte a nécessité une couche SQL capable de générer des requêtes différentes selon le fournisseur configuré.
+
+\section{Optimisation des coûts IA}
+
+Chaque appel à une API IA peut avoir un coût et un délai. La mise en place des réponses directes sans IA permet de traiter rapidement les demandes simples et de réserver le modèle aux questions qui nécessitent une vraie formulation conversationnelle.
+
+\section{Intégration frontend}
+
+L'interface devait être utilisable dans un site existant sans perturber la mise en page Joomla. Le choix d'un widget fixe, isolé visuellement et doté d'un z-index élevé permet de réduire les conflits avec les templates.
+
+\chapter{Compétences acquises}
+
+Ce stage a permis de renforcer plusieurs compétences :
+
+\begin{itemize}
+    \item développement d'API REST avec Flask ;
+    \item connexion et requêtes MySQL ;
+    \item conception d'une architecture modulaire ;
+    \item intégration d'API d'intelligence artificielle ;
+    \item prompt engineering ;
+    \item développement frontend avec React et Vite ;
+    \item intégration d'un widget dans Joomla ;
+    \item rédaction de tests unitaires avec Pytest ;
+    \item gestion de la configuration par variables d'environnement.
+\end{itemize}
+
+\chapter{Perspectives d'amélioration}
+
+Plusieurs améliorations peuvent être envisagées :
+
+\begin{itemize}
+    \item stocker l'historique des conversations dans Redis ou une base de données ;
+    \item ajouter un tableau de bord administrateur pour consulter les conversations ;
+    \item améliorer la détection de langue, notamment pour la Darija écrite en alphabet latin ;
+    \item ajouter des recommandations plus avancées basées sur les ventes ou les catégories ;
+    \item connecter le chatbot à un système de tickets support ;
+    \item ajouter des tests d'intégration pour les routes Flask ;
+    \item déployer le backend avec Gunicorn, Nginx et HTTPS ;
+    \item améliorer la configuration de production CORS et rate limiting.
+\end{itemize}
+
+\chapter{Conclusion générale}
+
+Le projet SonoBot constitue une solution complète d'assistant virtuel pour une boutique e-commerce spécialisée. Il combine une API Flask, une base de données MySQL, une interface React et une intégration IA multi-fournisseurs. Le projet répond à un besoin concret : aider les clients à trouver les bons produits, automatiser les réponses fréquentes et améliorer l'expérience d'achat.
+
+La réalisation de ce projet a permis de mettre en pratique des compétences variées, allant du backend à l'interface utilisateur, en passant par la base de données, la sécurité, les tests et l'intégration de modèles d'intelligence artificielle. L'approche retenue, basée sur la récupération de données du catalogue avant génération de réponse, renforce la fiabilité du chatbot et réduit les risques d'informations inventées.
+
+En perspective, SonoBot peut évoluer vers une solution plus complète de support client intelligent, avec un historique persistant, une interface d'administration, une meilleure analyse des intentions et une intégration plus poussée avec les outils e-commerce.
+
+\appendix
+
+\chapter{Exemple de fichier \texttt{.env}}
+
+\begin{lstlisting}[caption={Exemple de configuration}]
+AI_PROVIDER=mistral
+MISTRAL_API_KEY=your_api_key
+
+DB_HOST=127.0.0.1
+DB_USER=root
+DB_PASSWORD=
+DB_NAME=ecommerce_db
+DB_PORT=3306
+
+CATALOG_PROVIDER=hikashop
+JOOMLA_TABLE_PREFIX=
+
+FLASK_PORT=5000
+FLASK_DEBUG=True
+CORS_ORIGINS=*
+RATE_LIMIT=30/minute
+\end{lstlisting}
+
+\chapter{Commandes utiles}
+
+\begin{lstlisting}[caption={Installation et lancement du backend}]
+pip install -r requirements.txt
+python app.py
+\end{lstlisting}
+
+\begin{lstlisting}[caption={Installation et lancement du frontend}]
+cd frontend
+npm install
+npm run dev
+\end{lstlisting}
+
+\begin{lstlisting}[caption={Exécution des tests}]
+pytest
+\end{lstlisting}
+
+\end{document}

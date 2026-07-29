@@ -1,0 +1,592 @@
+% ============================================================================
+%  RAPPORT DE STAGE DE FIN D'ÉTUDES — ENSIASD TAROUDANT / UIBZ
+%  Inspiré du modèle académique officiel (Thème Bleu Institutionnel)
+%  Langue : Français
+%  Compilation : pdflatex → pdflatex
+% ============================================================================
+
+\documentclass[12pt, a4paper, oneside]{report}
+
+% ----------------------------------------------------------------------------
+% PACKAGES ESSENTIELS
+% ----------------------------------------------------------------------------
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[french]{babel}
+\usepackage{lmodern}
+\usepackage{microtype}
+
+% Layout & Marges
+\usepackage[
+  top=2.5cm,
+  bottom=2.5cm,
+  left=2.5cm,
+  right=2.5cm,
+  headheight=16pt
+]{geometry}
+
+% Couleurs
+\usepackage[table,xcdraw]{xcolor}
+\definecolor{mainblue}{RGB}{59, 113, 202}   % Bleu Institutionnel (#3B71CA)
+\definecolor{darkblue}{RGB}{35, 75, 145}   % Bleu Foncé pour Titres
+\definecolor{lightgray}{RGB}{245, 247, 250}
+\definecolor{bordergray}{RGB}{220, 224, 230}
+
+% En-têtes et pieds de page (fancyhdr)
+\usepackage{fancyhdr}
+\pagestyle{fancy}
+\fancyhf{}
+\renewcommand{\headrulewidth}{0.5pt}
+\renewcommand{\footrulewidth}{0pt}
+
+% Configuration En-tête / Pied de page par défaut
+\lhead{\small\textit{\leftmark}}
+\rhead{}
+\rfoot{\thepage}
+
+% Tableaux & Figures
+\usepackage{booktabs}
+\usepackage{tabularx}
+\usepackage{array}
+\usepackage{multirow}
+\usepackage{graphicx}
+\usepackage{float}
+\usepackage{caption}
+\usepackage{subcaption}
+\usepackage{setspace}
+\usepackage{parskip}
+
+% Graphiques & TikZ
+\usepackage{tikz}
+\usetikzlibrary{shapes.geometric, arrows.meta, positioning, calc}
+
+% Hyperliens & Format de Table des Matières
+\usepackage[
+  colorlinks=true,
+  linkcolor=darkblue,
+  urlcolor=mainblue,
+  citecolor=darkblue,
+  bookmarks=true
+]{hyperref}
+\usepackage{tocloft}
+
+% Customisation de la Table des Matières (Points de conduite)
+\renewcommand{\cftdot}{.}
+\renewcommand{\cftsecdotsep}{\cftdotsep}
+\renewcommand{\cftchapdotsep}{\cftdotsep}
+
+% ----------------------------------------------------------------------------
+% NUMÉROTATION ET FORMATAGE DES TITRES (Style I., II., III.1, etc.)
+% ----------------------------------------------------------------------------
+\usepackage{titlesec}
+
+% Modificateur pour redéfinir la numérotation en Romain pour les sections
+\renewcommand{\thesection}{\Roman{section}}
+\renewcommand{\thesubsection}{\thesection.\arabic{subsection}}
+\renewcommand{\thesubsubsection}{\thesubsection.\arabic{subsubsection}}
+
+% Style du Chapitre
+\titleformat{\chapter}[display]
+  {\normalfont\bfseries\color{darkblue}\Huge\raggedleft}
+  {\chaptertitlename\ \thechapter}
+  {10pt}
+  {\Huge\bfseries\color{black}}
+\titlespacing*{\chapter}{0pt}{-10pt}{20pt}
+
+% Style des Sections & Subsections
+\titleformat{\section}
+  {\normalfont\Large\bfseries\color{black}}
+  {\thesection.}
+  {0.8em}
+  {}
+
+\titleformat{\subsection}
+  {\normalfont\large\bfseries\color{black}}
+  {\thesubsection}
+  {0.8em}
+  {}
+
+\setstretch{1.25} % Espacement de ligne fluide
+
+% ============================================================================
+% DEBUT DU DOCUMENT
+% ============================================================================
+\begin{document}
+
+% ----------------------------------------------------------------------------
+% PAGE DE GARDE (Modèle ENSIASD Taroudant / Université Ibn Zohr)
+% ----------------------------------------------------------------------------
+\begin{titlepage}
+  \clearpage
+  \thispagestyle{empty}
+  \begin{center}
+
+    % Bandeau En-tête Logos & Texte Institutionnel
+    \begin{minipage}{0.65\textwidth}
+      \begin{center}
+        {\small\bfseries المدرسة الوطنية العليا للذكاء الاصطناعي وعلوم المعطيات - تارودانت}\\[3pt]
+        {\tiny\bfseries ÉCOLE NATIONALE SUPÉRIEURE DE L'INTELLIGENCE ARTIFICIELLE ET SCIENCES DES DONNÉES - TAROUDANT}
+      \end{center}
+    \end{minipage}
+    \hfill
+    \begin{minipage}{0.28\textwidth}
+      \begin{center}
+        \textbf{UNIVERSITÉ IBN ZOHR}\\
+        {\scriptsize AGADIR - MAROC}
+      \end{center}
+    \end{minipage}
+
+    \vspace{12pt}
+    % Barre Bleue Supérieure
+    {\color{mainblue}\rule{\textwidth}{6pt}}
+
+    \vspace{35pt}
+
+    % Titre du Document
+    {\Huge \textbf{RAPPORT DE STAGE}}\\[15pt]
+    {\Large \textbf{Filière : Ingénierie Logicielle}}\\[30pt]
+
+    % Encadrement du Titre de Projet (Double Ligne Horizon)
+    {\color{mainblue}\rule{\textwidth}{1.5pt}}
+    \vspace{2pt}
+    {\color{mainblue}\rule{\textwidth}{0.5pt}}\\[10pt]
+    {\Large \bfseries Conception et développement d’un assistant virtuel intelligent basé sur l'IA pour la plateforme e-commerce SonoBot}\\[10pt]
+    {\color{mainblue}\rule{\textwidth}{0.5pt}}
+    \vspace{2pt}
+    {\color{mainblue}\rule{\textwidth}{1.5pt}}\\[25pt]
+
+    % Réalisé et Encadré par
+    {\large \textbf{Réalisé par}}\\[5pt]
+    {\large \underline{\textbf{MOHAMED AMINE}}}\\[18pt]
+
+    {\large \textbf{Encadré par}}\\[5pt]
+    {\large \underline{\textbf{PR. [NOM ENCADRANT]}}}\\[25pt]
+
+    {\medium Soutenue le 06/12/2025 à l'Heure 10h10}\\[25pt]
+
+    % Table du Jury
+    {\large \textbf{Devant le jury}}\\[10pt]
+    \renewcommand{\arraystretch}{1.3}
+    \begin{tabular}{lll}
+      Pr Said Ait Temghart & Professeur à l'ENSIASD de Taroudant & Examinateur \\
+      Pr Loubna Karbil & Professeur à l'ENSIASD de Taroudant & Encadrante \\
+      Pr Fadila EL Bichri & Professeur à l'ENSIASD de Taroudant & Examinatrice \\
+      Pr/Mr Moussa LHOUSSAINE & Etablissement d'accueil : Moussasoft & Encadrant \\
+    \end{tabular}
+
+    \vfill
+
+    {\bfseries Année Universitaire 2025-2026}\\[12pt]
+
+    % Barre Bleue Inférieure
+    {\color{mainblue}\rule{\textwidth}{6pt}}
+
+  \end{center}
+\end{titlepage}
+
+\newpage
+\pagenumbering{roman}
+
+% ----------------------------------------------------------------------------
+% DÉDICACES
+% ----------------------------------------------------------------------------
+\thispagestyle{plain}
+\lhead{\small\textit{Dédicaces}}
+\vspace*{1cm}
+\begin{center}
+  {\Huge \textbf{DÉDICACES}}
+\end{center}
+\vspace{1.5cm}
+
+\begin{quote}
+\textit{\large \textbf{Chers parents,}}\\
+Une simple dévotion ne peut exprimer ma profonde gratitude pour votre patience infinie, vos encouragements constants et votre aide inestimable. Grâce à vous, je suis là où j'en suis aujourd'hui et j'ai accompli tant de choses. Votre sacrifice a été énorme, et je vous en suis profondément reconnaissant.
+\end{quote}
+
+\vspace{1cm}
+\begin{quote}
+\textit{\large \textbf{À mes chers frères et sœurs,}}\\
+Je tiens à exprimer ma sincère gratitude pour leur amour et leur soutien indéfectibles. Vous avez toujours été à mes côtés, m'inspirant à aller de l'avant et étant une source constante d'inspiration.
+\end{quote}
+
+\vspace{1cm}
+\begin{quote}
+\textit{\large \textbf{À mes amis et collègues,}}\\
+Je suis également très reconnaissant envers mes amis qui ont été à mes côtés tout au long de cette aventure. Sans leurs encouragements, ce travail n'aurait jamais été possible. Leur soutien indéfectible et leur amitié sincère ont été inestimables.
+\end{quote}
+
+\newpage
+
+% ----------------------------------------------------------------------------
+% REMERCIEMENTS
+% ----------------------------------------------------------------------------
+\lhead{\small\textit{Remerciements}}
+\vspace*{1cm}
+\begin{center}
+  {\Huge \textbf{REMERCIEMENTS}}
+\end{center}
+\vspace{1cm}
+
+Je tiens à remercier tout particulièrement l'ensemble des enseignants et du corps professoral de l'ENSIASD pour leur dévouement et la qualité des enseignements dispensés tout au long de ma formation d'ingénieur.
+
+Mes remerciements s'adressent également à mes encadrants pour avoir assuré la supervision de ce projet, pour leur disponibilité constante, leurs critiques constructives et leurs précieux conseils tout au long de ce stage de fin d'études.
+
+Je tiens à exprimer ma gratitude envers l'équipe de l'établissement d'accueil pour la confiance qu'ils m'ont accordée, les moyens mis à ma disposition ainsi que la collaboration fructueuse dont j'ai bénéficié.
+
+Enfin, je remercie chaleureusement les membres du jury d'avoir accepté d'évaluer ce travail de fin d'études.
+
+\newpage
+
+% ----------------------------------------------------------------------------
+% RÉSUMÉ
+% ----------------------------------------------------------------------------
+\lhead{\small\textit{Résumé}}
+\vspace*{0.5cm}
+\begin{center}
+  {\Huge \textbf{RÉSUMÉ}}
+\end{center}
+\vspace{0.8cm}
+
+Le présent projet s’inscrit dans le cadre de la digitalisation et de l’optimisation de la relation client au sein des plateformes e-commerce modernes. Il concerne la conception et le développement de \textbf{SonoBot}, une solution web intelligente d'assistance virtuelle 24/7 intégrant l'Intelligence Artificielle et une architecture RAG (\textit{Retrieval-Augmented Generation}).
+
+Développée avec un backend dynamique en Python/Flask et un frontend moderne sous React.js, la plateforme vise à fluidifier les échanges entre les consommateurs et le catalogue de produits, garantir des réponses instantanées et précises en temps réel, et automatiser le parcours de recommandation personnalisée.
+
+Ce projet a mobilisé plusieurs compétences techniques avancées : la modélisation UML, l'architecture logicielle MVC, la conception orientée objet, la gestion optimisée des bases de données relationnelles (MySQL), l'intégration d'API LLM multi-fournisseurs (OpenAI, Mistral, Gemini) ainsi que le développement d'interfaces web ergonomiques et sécurisées.
+
+\vspace{1cm}
+\textbf{Mots-clés :} Chatbot, Intelligence Artificielle, RAG, LLM, Python, Flask, React.js, MySQL, E-Commerce.
+
+\newpage
+
+% ----------------------------------------------------------------------------
+% INTRODUCTION GÉNÉRALE
+% ----------------------------------------------------------------------------
+\lhead{\small\textit{Introduction générale}}
+\vspace*{0.5cm}
+\begin{center}
+  {\Huge \textbf{INTRODUCTION GÉNÉRALE}}
+\end{center}
+\vspace{0.8cm}
+
+Dans un contexte de transformation numérique accélérée et d’expansion continue du commerce électronique, les entreprises cherchent sans cesse à améliorer la réactivité et la qualité de leur service client. L'intégration de systèmes conversationnels intelligents constitue aujourd’hui un levier stratégique majeur pour répondre aux attentes d’utilisateurs exigeants des réponses immédiates et personnalisées.
+
+Ce rapport retrace les différentes phases de réalisation de notre projet de fin d'études et s'articule autour de six chapitres principaux :
+
+\begin{itemize}
+  \item \textbf{Chapitre 1 : Présentation de l’organisme} — Description de l'entreprise d'accueil, de ses domaines d’expertise et du cadre général du stage.
+  \item \textbf{Chapitre 2 : Spécifications} — Analyse du contexte, formulation de la problématique, définition des objectifs et détails des besoins fonctionnels et non fonctionnels.
+  \item \textbf{Chapitre 3 : Conception et modélisation} — Présentation des diagrammes UML, du patron d'architecture MVC et de la structure de la base de données.
+  \item \textbf{Chapitre 4 : Environnement et outils de travail} — Présentation détaillée des outils de développement et des technologies sélectionnées (VS Code, Git, Flask, React.js, MySQL, etc.).
+  \item \textbf{Chapitre 5 : Réalisation du projet} — Déploiement des fonctionnalités, architecture RAG et illustrations des interfaces graphiques finales.
+  \item \textbf{Chapitre 6 : Conclusion générale et perspectives} — Synthèse des travaux réalisés, bilan des compétences et perspectives d'évolution futures.
+\end{itemize}
+
+\newpage
+
+% ----------------------------------------------------------------------------
+% TABLE DES MATIÈRES & LISTES
+% ----------------------------------------------------------------------------
+\lhead{\small\textit{Tables des matières}}
+\tableofcontents
+\newpage
+
+\lhead{\small\textit{Liste des abréviations}}
+\vspace*{0.5cm}
+\begin{center}
+  {\Huge \textbf{LISTE DES ABRÉVIATIONS}}
+\end{center}
+\vspace{0.8cm}
+
+\begin{table}[H]
+\centering
+\renewcommand{\arraystretch}{1.4}
+\begin{tabular}{|c|L{12cm}|}
+\hline
+\textbf{API} & Application Programming Interface \\ \hline
+\textbf{CORS} & Cross-Origin Resource Sharing \\ \hline
+\textbf{CSS} & Cascading Style Sheets \\ \hline
+\textbf{HTML} & HyperText Markup Language \\ \hline
+\textbf{IDE} & Integrated Development Environment \\ \hline
+\textbf{JS} & JavaScript \\ \hline
+\textbf{LLM} & Large Language Model \\ \hline
+\textbf{MVC} & Model View Controller \\ \hline
+\textbf{NLP} & Natural Language Processing \\ \hline
+\textbf{PHP} & Hypertext Preprocessor \\ \hline
+\textbf{RAG} & Retrieval-Augmented Generation \\ \hline
+\textbf{SQL} & Structured Query Language \\ \hline
+\textbf{UML} & Unified Modeling Language \\ \hline
+\end{tabular}
+\end{table}
+
+\newpage
+
+\lhead{\small\textit{Liste des figures}}
+\listoffigures
+\newpage
+
+\lhead{\small\textit{Liste des tableaux}}
+\listoftables
+\newpage
+
+% ----------------------------------------------------------------------------
+% CORPS DU DOCUMENT (PAGES NUMÉROTÉES EN ARABE)
+% ----------------------------------------------------------------------------
+\pagenumbering{arabic}
+\setcounter{page}{1}
+
+% ============================================================================
+% CHAPITRE 1 : PRESENTATION DE L'ORGANISME
+% ============================================================================
+\chapter{PRÉSENTATION DE L'ORGANISME}
+\lhead{\small\textit{Chapitre 1: Présentation de l'organisme}}
+
+\section{Introduction}
+L'entreprise d'accueil est une structure dynamique spécialisée dans l'innovation technologique et la distribution de solutions logicielles et électroniques adaptées aux besoins du marché local et international. Fondée avec une vision orientée vers la transformation digitale, elle se positionne aujourd'hui comme un acteur clé dans le développement de systèmes intelligents.
+
+L’entreprise intervient dans plusieurs domaines d'activité stratégiques :
+\begin{itemize}
+  \item \textbf{Développement logiciel :} Conception et réalisation d’applications web et mobiles sur mesure.
+  \item \textbf{Intelligence Artificielle \& Data :} Intégration d'agents conversationnels et de modèles prédictifs.
+  \item \textbf{Systèmes embarqués et IoT :} Développement de solutions connectées intelligentes.
+  \item \textbf{Solutions sur mesure :} Accompagnement digital global pour les entreprises et institutions.
+\end{itemize}
+
+\section{Fiche technique de la société}
+Le Tableau 1.1 résume les informations légales et administratives clés relatives à l'organisme d'accueil :
+
+\begin{table}[H]
+\centering
+\caption{Fiche technique de l'entreprise d'accueil}
+\renewcommand{\arraystretch}{1.3}
+\begin{tabular}{|l|l|}
+\hline
+\textbf{Adresse} & Bureau TA202 Technoparc, Agadir, Maroc \\ \hline
+\textbf{Email} & contact@entreprise.com \\ \hline
+\textbf{Téléphone} & +212 5 28 00 00 00 \\ \hline
+\textbf{Site Web} & www.entreprise.com \\ \hline
+\textbf{Forme juridique} & Société à Responsabilité Limitée (SARL) \\ \hline
+\textbf{Capital} & 100 000 DHS \\ \hline
+\textbf{Secteur d'activité} & Ingénierie logicielle \& Solutions digitales \\ \hline
+\end{tabular}
+\end{table}
+
+\section{Raison du choix de l'organisme}
+Notre choix d’effectuer ce stage au sein de cette entreprise repose sur des critères motivants :
+\begin{itemize}
+  \item \textbf{Expertise technique :} Une solide expérience dans les architectures logicielles modernes.
+  \item \textbf{Encadrement de qualité :} Un suivi rapproché et personnalisé favorisant l'apprentissage.
+  \item \textbf{Projets innovants :} L'opportunité de travailler sur des problématiques réelles à forte valeur ajoutée.
+\end{itemize}
+
+\section{Conclusion}
+Ce premier chapitre a permis de cadrer l'environnement professionnel du stage. La suite du rapport présentera la phase de spécification et d'analyse des besoins du projet.
+
+% ============================================================================
+% CHAPITRE 2 : SPECIFICATIONS
+% ============================================================================
+\chapter{SPÉCIFICATIONS}
+\lhead{\small\textit{Chapitre 2: Spécifications}}
+
+\section{Introduction}
+La phase de spécification constitue une étape primordiale dans tout projet de développement informatique. Elle vise à formaliser les attentes fonctionnelles et techniques afin de garantir une adéquation parfaite entre le besoin exprimé et la solution logicielle à développer.
+
+\section{Contexte général}
+Avec l'essor du e-commerce, la rapidité d'accès à l'information produit et l'assistance en temps réel sont devenues des critères prépondérants pour la satisfaction des clients. Le projet vise à combler les lacunes des systèmes traditionnels en déployant une plateforme dotée d'un assistant conversationnel réactif.
+
+\section{Cahier des charges}
+
+\subsection{Problématique}
+Les utilisateurs naviguant sur les plateformes web font fréquemment face à une surabondance d'informations ou à des temps d'attente prolongés pour obtenir des renseignements sur les produits. Comment optimiser l'interaction client et centraliser l'accès aux données du catalogue de manière rapide, précise et sécurisée ?
+
+\subsection{Objectifs du projet}
+Les principaux objectifs assignés au projet sont :
+\begin{itemize}
+  \item Fluidifier la communication entre les utilisateurs et la plateforme via un chatbot IA.
+  \item Mettre en place un système de recommandation guidée basé sur un questionnaire interactif.
+  \item Garantir la traçabilité des stocks et la fiabilité des informations fournies.
+  \item Assurer une haute performance avec des temps de réponse optimisés.
+\end{itemize}
+
+\section{Acteurs du système}
+Le système fait intervenir plusieurs acteurs majeurs :
+\begin{itemize}
+  \item \textbf{L'Utilisateur / Client :} Interagit avec l'assistant, recherche des produits et consulte les recommandations.
+  \item \textbf{L'Administrateur :} Gère le catalogue, surveille les métriques du système et valide la configuration.
+  \item \textbf{Le Système IA :} Traite le langage naturel et génère des réponses contextuelles via l’architecture RAG.
+\end{itemize}
+
+\section{Besoins}
+
+\subsection{Besoins fonctionnels}
+\begin{itemize}
+  \item Authentification et gestion des profils utilisateurs.
+  \item Consultation interactive du catalogue produits.
+  \item Moteur de recherche intelligente par mot-clé et critères.
+  \item Assistant conversationnel intelligent (Chatbot IA 24/7).
+  \item Parcours de recommandation guidée en 4 étapes.
+\end{itemize}
+
+\subsection{Besoins non fonctionnels}
+\begin{itemize}
+  \item \textbf{Sécurité :} Protection contre les injections SQL, failles XSS et contrôle des accès (Rate Limiting).
+  \item \textbf{Performance :} Temps de réponse inférieurs à 2 secondes pour les requêtes standard.
+  \item \textbf{Ergonomie :} Interface moderne, responsive et intuitive.
+\end{itemize}
+
+\section{Conclusion}
+Cette phase de spécification a permis de fixer les fondations théoriques du projet en clarifiant les périmètres fonctionnels et techniques du futur système.
+
+% ============================================================================
+% CHAPITRE 3 : CONCEPTION ET MODELISATION
+% ============================================================================
+\chapter{CONCEPTION ET MODÉLISATION}
+\lhead{\small\textit{Chapitre 3: Conception et modélisation}}
+
+\section{Introduction}
+La conception traduit les spécifications en modèles techniques structurés. Ce chapitre décrit le cycle de vie adopté, la méthodologie UML ainsi que l'architecture logicielle retenue.
+
+\section{Cycle de vie}
+Nous avons adopté un modèle de développement itératif et agile, permettant une intégration continue des fonctionnalités et une adaptation rapide aux retours d'expérience.
+
+\section{La méthodologie de conception}
+
+\subsection{UML}
+Le langage UML (Unified Modeling Language) a été utilisé pour formaliser les vues statiques et dynamiques de l'application.
+
+\subsection{L'architecture MVC}
+L'architecture adopte le pattern Modèle-Vue-Contrôleur (MVC), assurant une séparation claire entre la couche de données, la logique métier et l'interface utilisateur.
+
+\section{Conception détaillée}
+
+\subsection{Diagramme de cas d'utilisation}
+Le diagramme de cas d'utilisation permet de visualiser les interactions principales des acteurs avec le système (Figure 3.1).
+
+\begin{figure}[H]
+\centering
+\begin{tikzpicture}[scale=0.8, transform shape]
+  \node[draw, circle, minimum size=1cm] (user) at (0,2) {Client};
+  \node[draw, ellipse] (uc1) at (5,4) {Consulter Catalogue};
+  \node[draw, ellipse] (uc2) at (5,2) {Discuter avec Chatbot};
+  \node[draw, ellipse] (uc3) at (5,0) {Suivre Recommandation};
+  
+  \draw (user) -- (uc1);
+  \draw (user) -- (uc2);
+  \draw (user) -- (uc3);
+\end{tikzpicture}
+\caption{Diagramme de cas d’utilisation globale du projet}
+\end{figure}
+
+\subsection{Diagramme de classe}
+Le diagramme de classes modélise la structure statique des entités (Utilisateur, Produit, SessionChat, Message).
+
+\subsection{Diagramme de séquence}
+Le diagramme de séquence illustre le traitement chronologique d'un message utilisateur à travers le pipeline RAG backend.
+
+\section{Structure de la base de données}
+La base de données relationnelle MySQL repose sur un schéma optimisé garantissant l'intégrité référentielle et la rapidité d'exécution des requêtes SQL.
+
+\section{Conclusion}
+La phase de conception a permis d’établir des modèles solides assurant la robustesse et l'évolutivité de l'application.
+
+% ============================================================================
+% CHAPITRE 4 : ENVIRONNEMENT ET OUTILS DE TRAVAIL
+% ============================================================================
+\chapter{ENVIRONNEMENT ET OUTILS DE TRAVAIL}
+\lhead{\small\textit{Chapitre 4: Environnement et outils de travail}}
+
+\section{Introduction}
+Ce chapitre passe en revue l'ensemble des environnements matériels, logiciels et frameworks utilisés pour mener à bien le développement de la plateforme.
+
+\section{Outils de travail}
+\begin{itemize}
+  \item \textbf{Visual Studio Code :} Éditeur de code principal doté d'extensions avancées.
+  \item \textbf{Git \& GitHub :} Gestionnaire de versions pour le suivi du code source.
+  \item \textbf{Enterprise Architect / Draw.io :} Outils de modélisation UML.
+\end{itemize}
+
+\section{Outils de développement}
+\begin{itemize}
+  \item \textbf{Python / Flask :} Framework backend léger et performant pour orchestrer l'API REST.
+  \item \textbf{React.js \& Vite :} Bibliothèque frontend moderne pour des interfaces réactives.
+  \item \textbf{MySQL :} Système de gestion de base de données relationnelle.
+  \item \textbf{Tailwind CSS :} Framework CSS utilitaire pour des styles modernes.
+\end{itemize}
+
+\section{Conclusion}
+L'écosystème technologique choisi garantit des performances élevées, une grande flexibilité et un temps de développement optimisé.
+
+% ============================================================================
+% CHAPITRE 5 : REALISATION DE PROJET
+% ============================================================================
+\chapter{RÉALISATION DU PROJET}
+\lhead{\small\textit{Chapitre 5: Réalisation de projet}}
+
+\section{Introduction}
+Ce chapitre présente les résultats concrets du développement, incluant l'architecture RAG implémentée ainsi que les captures d'écran des interfaces graphiques finales.
+
+\section{Les interfaces graphiques}
+
+\subsection{Page d'accueil}
+La page d'accueil présente la plateforme, la valeur ajoutée du système et donne un accès direct à l'assistant virtuel.
+
+\subsection{Interface du Chatbot IA}
+L'interface conversationnelle permet aux utilisateurs de poser des questions en langage naturel et d'obtenir des réponses enrichies avec le contexte des produits de la base de données.
+
+\subsection{Module de Recommandation Guidée}
+Ce module propose un questionnaire interactif permettant d'orienter l'utilisateur étape par étape vers les articles répondant le mieux à ses critères.
+
+\section{Conclusion}
+La phase de réalisation a permis d'aboutir à une application complète, fonctionnelle et conforme au cahier des charges initial.
+
+% ============================================================================
+% CHAPITRE 6 : CONCLUSION GENERALE ET PERSPECTIVES
+% ============================================================================
+\chapter{CONCLUSION GÉNÉRALE ET PERSPECTIVES}
+\lhead{\small\textit{Chapitre 6: Conclusion générale et perspectives}}
+
+\section{Conclusion générale}
+Le projet de fin d'études a permis de concevoir et développer une solution web innovante combinant l'intelligence artificielle conversationnelle et les technologies web modernes. Grâce à une méthodologie rigoureuse, nous avons répondu avec succès aux problématiques de fluidification des échanges et d'assistance utilisateur.
+
+Ce projet m'a permis d'approfondir mes compétences théoriques et pratiques en ingénierie logicielle, en développement full-stack et en modélisation UML.
+
+\section{Perspectives}
+
+\subsection{Perspectives à court terme}
+\begin{itemize}
+  \item Développement d'une application mobile native (iOS / Android).
+  \item Intégration d'un système de paiement en ligne sécurisé.
+\end{itemize}
+
+\subsection{Perspectives à moyen terme}
+\begin{itemize}
+  \item Déploiement de tableaux de bord analytiques avancés (Business Intelligence).
+  \item Intégration avec des systèmes ERP / CRM externes.
+\end{itemize}
+
+\subsection{Perspectives à long terme}
+\begin{itemize}
+  \item Exploitation de la recherche vectorielle (Vector Embeddings) pour affiner la recherche sémantique.
+  \item Déploiement multi-régional avec support multilingue étendu.
+\end{itemize}
+
+% ============================================================================
+% BIBLIOGRAPHIE
+% ============================================================================
+\chapter*{BIBLIOGRAPHIE}
+\addcontentsline{toc}{chapter}{BIBLIOGRAPHIE}
+\lhead{\small\textit{Bibliographie}}
+
+\section*{I. Ouvrages et Documentation Technique}
+\begin{enumerate}
+  \item GARDARIN, Georges. \textit{Bases de données}. Éditions Eyrolles, 2003.
+  \item ROQUES, Pascal. \textit{UML 2 par la pratique}. Éditions Eyrolles, 8e édition, 2018.
+\end{enumerate}
+
+\section*{II. Sites Web et Webographie}
+\begin{enumerate}
+  \item Documentation officielle Flask : \url{https://flask.palletsprojects.com/}
+  \item Documentation officielle React : \url{https://react.dev/}
+  \item Documentation officielle MySQL : \url{https://dev.mysql.com/doc/}
+\end{enumerate}
+
+\end{document}

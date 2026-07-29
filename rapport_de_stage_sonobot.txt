@@ -1,0 +1,72 @@
+# Rapport de Projet : SonoBot - Assistant Virtuel Intelligent pour E-commerce
+
+## 1. Introduction et Contexte du Projet
+Dans le cadre de l'amélioration de l'expérience utilisateur et de l'automatisation du support client pour **SonoLight** (une boutique marocaine en ligne spécialisée dans l'éclairage professionnel, l'équipement DJ et les effets scéniques basée à Agadir), j'ai conçu et développé **SonoBot**. 
+
+SonoBot est un assistant virtuel intelligent (chatbot) basé sur l'Intelligence Artificielle. Son rôle principal est d'assister les clients en temps réel, de répondre à leurs questions concernant les produits (prix, disponibilité, caractéristiques), de les guider dans leurs achats selon leurs besoins spécifiques (budget, type d'événement), et de fournir des informations sur les politiques du magasin (livraison, paiement, retours).
+
+## 2. Objectifs du Projet
+*   **Automatisation du support client** : Réduire la charge de travail du service client en répondant automatiquement aux questions fréquentes.
+*   **Recommandation de produits (Vente assistée)** : Implémenter un système de questions/réponses guidé pour orienter les clients vers les bons équipements selon leur contexte (mariage, concert, club, etc.).
+*   **Accessibilité multilingue** : Gérer de manière fluide les requêtes en français, anglais, arabe classique et Darija marocaine.
+*   **Connexion en temps réel au catalogue** : Fournir des informations exactes et à jour sur les stocks et les prix en se connectant directement à la base de données e-commerce (Hikashop/Joomla ou base MySQL native).
+
+## 3. Architecture et Technologies Utilisées
+Le projet repose sur une architecture backend robuste et modulaire en Python, exposant des API RESTful pour interagir avec l'interface web (frontend).
+
+*   **Backend** : Python 3 avec le framework **Flask**.
+*   **Base de Données** : **MySQL** (connecteur `mysql-connector-python`) pour la gestion du catalogue produits.
+*   **Intelligence Artificielle (LLMs)** : Intégration de modèles de langage avancés (Large Language Models) via l'API **OpenAI**. Le système est agnostique et multi-fournisseurs, capable de basculer entre *OpenAI, Mistral AI, Groq, OpenRouter* ou *Google Gemini* selon la configuration.
+*   **Frontend** : HTML/CSS/JS (`chatbot_joomla.html`) conçu pour s'intégrer facilement dans un CMS comme Joomla.
+*   **Sécurité & Performance** : Utilisation de `Flask-Limiter` pour le Rate Limiting (protection contre le spam) et de `Flask-CORS` pour la gestion sécurisée des requêtes cross-origin.
+
+## 4. Fonctionnalités Principales Développées
+
+### 4.1. Système RAG (Retrieval-Augmented Generation)
+Le cœur de l'intelligence de SonoBot repose sur l'architecture RAG. Lorsqu'un utilisateur pose une question :
+1.  **Extraction et Recherche** : Le système extrait les mots-clés de la requête et effectue une recherche pertinente dans la base de données MySQL (via `catalog.py`). Un algorithme de "Relevance Score" classe les résultats par pertinence (nom du produit, catégorie, description).
+2.  **Génération Augmentée** : Les données réelles du catalogue (produits trouvés, prix, stock en direct) sont injectées dynamiquement dans le "System Prompt" de l'IA.
+3.  **Réponse Fiable** : L'IA génère ensuite une réponse naturelle, garantie sans "hallucination", basée *exclusivement* sur les données du magasin.
+
+### 4.2. Parcours Guidé (Assistant de Vente)
+Développement d'un algorithme de "Conversation Guidée" (`guide.py`). Si l'utilisateur exprime de l'incertitude (ex: *"Je ne sais pas quoi choisir"*), le bot déclenche un processus en 4 étapes pour qualifier le besoin :
+1.  Type d'événement (Mariage, Concert, Club, etc.)
+2.  Environnement (Intérieur, Extérieur)
+3.  Budget 
+4.  Type d'effet recherché (Beam, Laser, Wash...)
+À la fin du tunnel, l'algorithme croise ces critères pour interroger la base de données et recommander les produits les plus adaptés.
+
+### 4.3. Gestion du Contexte et des Sessions (Mémoire)
+Implémentation d'un gestionnaire de sessions personnalisé (`ai.py`) stockant l'historique des conversations en mémoire (Thread-safe avec `threading.Lock`). Cela permet au chatbot de comprendre le contexte des messages précédents de l'utilisateur (avec une limite et un nettoyage automatique des sessions expirées pour optimiser l'utilisation de la RAM).
+
+### 4.4. Court-circuit IA (Direct Catalog Response)
+Pour optimiser les coûts d'API et accélérer les temps de réponse, j'ai développé un parseur de requêtes (NLP basique par mots-clés et expressions régulières). Pour les questions simples concernant le prix, la quantité ou la liste des catégories (ex: *"Combien coûte la lyre beam ?"* ou *"Quelles sont les catégories ?"*), le système répond instantanément en requêtant directement la base de données, sans faire appel à l'IA.
+
+### 4.5. Respect strict des règles de Langue et de Marque
+Le prompt système a été finement ingénierié (Prompt Engineering) pour imposer des règles strictes :
+*   Le bot s'adapte automatiquement à la langue de l'utilisateur (Arabe, Darija, Français, Anglais).
+*   Il respecte les politiques de livraison et de paiement de SonoLight.
+*   Il affiche les prix en Dirham Marocain (MAD).
+*   Il gère intelligemment les ruptures de stock en suggérant des alternatives.
+
+## 5. Modélisation de la Base de Données
+La gestion du catalogue repose sur une base MySQL. Le système est conçu pour être compatible à la fois avec une architecture e-commerce native ou en se branchant directement sur les tables du composant **HikaShop** (Joomla).
+La structure principale (`products`) intègre les attributs suivants :
+*   `id` : Identifiant unique.
+*   `name` : Nom du produit.
+*   `description` : Description détaillée.
+*   `price` : Prix (Decimal).
+*   `stock` : Quantité disponible en temps réel.
+*   `category` : Catégorisation du matériel (Lasers, Éclairage LED, Moving Heads, etc.).
+
+## 6. Défis Techniques & Optimisations
+*   **Gestion du "Rate Limiting" des APIs IA** : Mise en place d'un système de réessai automatique (Retry mechanism) avec attente exponentielle (Exponential Backoff) pour gérer les erreurs "429 Too Many Requests" renvoyées par les fournisseurs d'IA.
+*   **Protection de l'application** : Limitation du nombre de requêtes par IP (`Flask-Limiter`) pour prévenir les attaques DDoS et le spam de l'API payante.
+*   **Parsing SQL Sécurisé** : Utilisation stricte de requêtes préparées (Prepared Statements / requêtes paramétrées) pour empêcher toute injection SQL lors des recherches dans le catalogue.
+
+## 7. Bilan et Compétences Acquises
+Ce projet m'a permis de consolider mes compétences en :
+*   **Développement Backend** (Python, Flask, API REST).
+*   **Ingénierie IA & Prompt Engineering** (Intégration d'API OpenAI/Mistral/Gemini, Architecture RAG).
+*   **Bases de Données** (Conception et optimisation de requêtes SQL complexes, filtres et jointures dynamiques).
+*   **Architecture logicielle** (Code modulaire, gestion des erreurs, sécurité web).

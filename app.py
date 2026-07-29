@@ -16,11 +16,12 @@ from db import get_db_connection
 from catalog import (
     search_database, fetch_products, get_catalog_provider, get_hikashop_prefix,
 )
-from ai import openai_client, chat_completion
+from ai import chat_completion
 from guide import (
     GUIDE_STEPS, is_guide_trigger, guide_product_search, direct_catalog_response,
-    format_product_list,
+    format_product_list, get_guide_step, guide_copy,
 )
+from utils import detect_language
 
 logger = logging.getLogger("sonobot.app")
 
@@ -64,6 +65,7 @@ def guide():
     step = data.get("step", 0)
     answer = data.get("answer", "")
     criteria = data.get("criteria", {})
+    language = criteria.get("language", "fr")
 
     step_keys = {1: "event_type", 2: "environment", 3: "budget", 4: "effect_type"}
 
@@ -73,7 +75,7 @@ def guide():
     next_step = step + 1
 
     if next_step in GUIDE_STEPS:
-        guide_data = GUIDE_STEPS[next_step]
+        guide_data = get_guide_step(next_step, language)
         return jsonify({
             "type": "guide",
             "step": next_step,
@@ -87,22 +89,24 @@ def guide():
     if products:
         result = format_product_list(
             products,
-            "🎯 D'après vos besoins, voici les produits que je vous recommande :",
+            guide_copy(language, "recommendations") or "🎯 D'après vos besoins, voici les produits que je vous recommande :",
+            language=language,
         )
     else:
         fallback = fetch_products(limit=5)
         if fallback:
             result = format_product_list(
                 fallback,
-                "Je n'ai pas trouvé de correspondance exacte, mais voici quelques suggestions :",
+                guide_copy(language, "fallback") or "Je n'ai pas trouvé de correspondance exacte, mais voici quelques suggestions :",
+                language=language,
             )
         else:
-            result = (
+            result = guide_copy(language, "no_results") or (
                 "Désolé, je n'ai pas pu trouver de produits pour le moment. "
                 "Contactez notre support pour une assistance personnalisée. 📧"
             )
 
-    result += "\n\n💬 Besoin de plus de détails sur un produit ? N'hésitez pas à demander !"
+    result += "\n\n" + (guide_copy(language, "follow_up") or "💬 Besoin de plus de détails sur un produit ? N'hésitez pas à demander !")
 
     return jsonify({
         "type": "result",
@@ -154,30 +158,57 @@ def chat():
 
     # Check for guided-conversation triggers first
     if is_guide_trigger(user_message):
-        guide_data = GUIDE_STEPS[1]
+        language = detect_language(user_message)
+        guide_data = get_guide_step(1, language)
         return jsonify({
             "type": "guide",
             "step": 1,
             "response": guide_data["question"],
             "options": guide_data["options"],
-            "criteria": {},
+            "criteria": {"language": language},
         })
 
     direct_response = direct_catalog_response(user_message)
     if direct_response:
+        # Save to session history so follow-up questions have context
+        if session_id:
+            from ai import add_to_history
+            add_to_history(session_id, "user", user_message)
+            add_to_history(session_id, "assistant", direct_response)
         return jsonify({"response": direct_response, "source": "database"})
 
     # Fetch relevant product context from MySQL database
-    matched_products = search_database(user_message)
+    matched_products = search_database(user_message) or []
+
+    # If no products matched and the message is short (follow-up like "son prix?"),
+    # try to extract product context from the recent conversation history
+    if not matched_products and session_id and len(user_message.split()) <= 5:
+        from ai import get_history
+        from catalog import fetch_product_matches
+        from guide import _filter_by_relevance
+        history = get_history(session_id)
+        # Check recent messages: prioritize user messages (they contain product names)
+        for msg in reversed(history[-6:]):
+            if len(msg["content"]) > 15:
+                candidates = fetch_product_matches(msg["content"], limit=3)
+                filtered = _filter_by_relevance(candidates, msg["content"])
+                if filtered:
+                    matched_products = filtered
+                    break
 
     product_context = ""
     if matched_products:
         product_context = "Relevant products in store catalog:\n"
         for prod in matched_products:
+            price = float(prod.get('price', 0) or 0)
+            price_str = f"{price:.2f} MAD" if price > 0 else "Prix sur demande"
+            ref = prod.get('reference', '')
+            ref_str = f"  Reference/SKU: {ref}\n" if ref else ""
             product_context += (
                 f"- Name: {prod['name']}\n"
+                f"{ref_str}"
                 f"  Category: {prod['category']}\n"
-                f"  Price: {prod['price']:.2f} MAD\n"
+                f"  Price: {price_str}\n"
                 f"  Stock: {prod['stock']} available\n"
                 f"  Description: {prod['description']}\n\n"
             )
