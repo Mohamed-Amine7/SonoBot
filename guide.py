@@ -262,8 +262,8 @@ def direct_catalog_response(user_message):
     if compact_message.strip() in {'hi', 'hello', 'hey'}:
         return None
 
-    # French / universal greetings — reply in French (default language)
-    if compact_message.strip() in {'salam', 'bonjour', 'salut', 'labas', 'ahlan', 'marhba'}:
+    # French greetings — reply in French
+    if compact_message.strip() in {'bonjour', 'bonsoir', 'salut', 'coucou'}:
         return (
             "Bonjour ! 😊 Je suis SonoBot, votre assistant SonoLight. "
             "Je peux vous aider à trouver des produits, vérifier les prix et la disponibilité. "
@@ -299,10 +299,34 @@ def direct_catalog_response(user_message):
     asks_quantity = _any_word_match(("quantite", "quantity", "stock"), compact_message)
     asks_catalog = _any_word_match(
         (
+            # Core catalog terms
             "produit", "produits", "catalogue", "disponible", "disponibles", "stock", "prix", "mad",
             "materiel", "materiels", "eclairage", "deejay", "dj", "categorie", "categories",
-            "light", "laser", "beam", "wash", "waterproof", "flat", "par", "pcs", "led", "in1",
-            "coup", "coeur", "quantite", "nombre", "combien",
+            # Product type terms
+            "light", "lights", "laser", "lasers", "beam", "wash", "waterproof", "flat", "par",
+            "pcs", "led", "leds", "in1", "moving", "head", "strobe", "stroboscope",
+            "fog", "smoke", "fumee", "haze", "brouillard", "neige", "snow", "bubble", "bulles",
+            "confetti", "confettis", "flame", "flamme", "co2", "canon",
+            "projecteur", "projecteurs", "spot", "spots",
+            "enceinte", "enceintes", "speaker", "speakers", "amplificateur", "ampli",
+            "micro", "microphone", "table", "mixage", "mixer", "controleur", "controller",
+            "dmx", "cable", "cables", "trepied", "trepieds", "support", "pied", "pieds",
+            "fly", "case", "flight", "flightcase",
+            # Best-seller / popularity terms
+            "coup", "coeur",
+            "vendus", "vendu", "ventes", "vente",
+            "populaires", "populaire", "tendance", "tendances",
+            "favoris", "favori", "preferes", "prefere",
+            "incontournables", "incontournable", "phares", "phare",
+            "vedettes", "vedette", "stars", "star",
+            "meilleurs", "meilleur", "meilleures", "meilleure",
+            "recommandes", "recommande",
+            "selection", "suggestions",
+            # Quantity / count terms
+            "quantite", "nombre", "combien",
+            # English catalog terms
+            "equipment", "gear", "item", "items",
+            "available", "inventory",
         ), compact_message
     ) or product_search_signals
 
@@ -361,8 +385,95 @@ def direct_catalog_response(user_message):
             )
         return format_category_list(categories)
 
-    # --- "Coup de cœur" category products ---
-    if "coup" in compact_message and "coeur" in compact_message:
+    # --- "Coup de cœur" / best-sellers / most popular products ---
+    is_best_seller_query = (
+        ("coup" in compact_message and "coeur" in compact_message)
+        or any(
+            phrase in compact_message
+            for phrase in (
+                # French — "plus vendus" variants
+                "plus vendus", "plus vendu", "plus vendue", "plus vendues",
+                "mieux vendus", "mieux vendu", "mieux vendues", "mieux vendue",
+                # French — "meilleures ventes"
+                "meilleures ventes", "meilleure vente", "meilleurs ventes",
+                # French — "best-seller"
+                "best seller", "best sellers", "bestseller", "bestsellers",
+                "best of", "top ventes", "top vente", "top produits", "top produit",
+                # French — "populaires"
+                "populaires", "populaire", "les plus populaires",
+                # French — "tendance"
+                "tendance", "tendances", "en tendance", "a la mode",
+                # French — "demandés"
+                "les plus demandes", "plus demande", "plus demandes",
+                "les plus demandees", "plus demandee",
+                # French — "recommandés / favoris / préférés"
+                "recommandes", "recommande", "recommandees", "recommandee",
+                "favoris", "favori", "favorite", "favorites",
+                "preferes", "prefere", "preferees", "preferee",
+                "les preferes", "vos preferes", "nos preferes",
+                "les favoris", "vos favoris", "nos favoris",
+                # French — "incontournables / phares / stars"
+                "incontournables", "incontournable",
+                "produits phares", "produit phare",
+                "produits stars", "produit star",
+                "produits vedettes", "produit vedette",
+                "produits succes", "succes",
+                # French — other formulations
+                "choix populaires", "les meilleurs", "le meilleur",
+                "ce qui se vend le mieux", "ce qui marche le mieux",
+                "ce qui part le plus", "qui se vendent le mieux",
+                "les plus apprecies", "plus apprecie", "plus apprecies",
+                "les plus achetes", "plus achete", "plus achetes",
+                "les plus aimes", "plus aime", "plus aimes",
+                "les plus choisis", "plus choisi", "plus choisis",
+                "selection", "nos suggestions",
+                "valeurs sures", "valeur sure",
+                # English — best sellers
+                "most popular", "most sold", "top selling", "top rated",
+                "best selling", "highest rated", "most bought",
+                "most purchased", "most ordered", "most requested",
+                "most demanded", "most liked", "most loved",
+                "most recommended", "customer favorites", "customer favourite",
+                "trending", "trending products", "hot products",
+                "popular products", "popular items",
+                "what sells the most", "what do you recommend",
+                "your best products", "your top products",
+                "featured products", "featured items",
+                "hot items", "must have", "must haves",
+                # Darija (Latin script)
+                "li kayetba3 bezzaf", "li kayetba3 kter",
+                "li 3andkom mzyanin", "ahsan produit",
+                "ahsan les produits", "chnou li kayetba3",
+                "chnou li ghadi", "li kayt9ad bezzaf",
+                "li kaymchi bezzaf", "li 3lih talab",
+                "les plus demandes 3andkom",
+            )
+        )
+        # Arabic script triggers (checked against original message)
+        or any(
+            trigger in user_message
+            for trigger in (
+                "الأكثر مبيعا", "الاكثر مبيعا", "الأكثر مبيعاً",
+                "أكثر مبيعا", "اكثر مبيعا",
+                "الأفضل مبيعا", "افضل مبيعا",
+                "الأكثر طلبا", "الاكثر طلبا", "الأكثر طلباً",
+                "أكثر طلبا", "اكثر طلبا",
+                "المنتجات الشائعة", "المنتجات المشهورة",
+                "الأكثر شعبية", "الاكثر شعبية",
+                "المفضلة", "المفضل", "المفضلين",
+                "كوب دو كور", "كو دو كور",
+                "أحسن المنتجات", "احسن المنتجات",
+                "أحسن منتج", "احسن منتج",
+                "شنو لي كايتباع", "شنو كايتباع بزاف",
+                "لي كايتباع بزاف", "لي عليه طلب",
+                "أشهر المنتجات", "اشهر المنتجات",
+                "منتجات رائجة", "رائج", "رائجة",
+                "الأعلى مبيعا", "الاعلى مبيعا",
+                "توب", "بيست سيلر",
+            )
+        )
+    )
+    if is_best_seller_query:
         categories = fetch_categories()
         coup_category = find_requested_category("Coup de cœur", categories)
         if not coup_category:
@@ -370,7 +481,7 @@ def direct_catalog_response(user_message):
         if coup_category:
             products = fetch_products_by_category(coup_category, limit=100)
             return format_product_list(
-                products, f"Voici les produits de la catégorie {coup_category} :"
+                products, f"Voici nos produits les plus populaires (Coup de cœur) :"
             )
         return "La catégorie 'Coup de cœur' n'existe pas actuellement dans le catalogue."
 

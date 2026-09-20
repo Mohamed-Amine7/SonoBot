@@ -155,17 +155,17 @@ def chat():
 
     user_message = user_message.strip()
     session_id = data.get("session_id")
+    detected_lang = detect_language(user_message)
 
     # Check for guided-conversation triggers first
     if is_guide_trigger(user_message):
-        language = detect_language(user_message)
-        guide_data = get_guide_step(1, language)
+        guide_data = get_guide_step(1, detected_lang)
         return jsonify({
             "type": "guide",
             "step": 1,
             "response": guide_data["question"],
             "options": guide_data["options"],
-            "criteria": {"language": language},
+            "criteria": {"language": detected_lang},
         })
 
     direct_response = direct_catalog_response(user_message)
@@ -215,8 +215,13 @@ def chat():
     else:
         product_context = "No catalog information is currently available or matched.\n"
 
-    # Call AI with conversation history
-    reply, error = chat_completion(user_message, product_context, session_id)
+    # Call AI with conversation history and target language
+    reply, error = chat_completion(
+        user_message,
+        product_context,
+        session_id=session_id,
+        target_language=detected_lang,
+    )
 
     if error:
         return jsonify({"response": error, "error": error}), 500

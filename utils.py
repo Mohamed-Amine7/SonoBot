@@ -24,24 +24,41 @@ def has_arabic(text):
 
 
 def detect_language(text):
-    """Return the response language for a customer message.
+    """Return the response language ('en', 'fr', 'ar', 'darija') for a customer message.
 
-    This deliberately uses simple, deterministic signals.  It is used before
-    shortcuts such as direct catalogue replies, so those replies cannot switch
-    an English or Arabic customer back to French.
+    Uses robust keyword signaling and pattern detection to accurately identify
+    the user's intended language and prevent language inertia in chat history.
     """
+    if not text or not str(text).strip():
+        return "fr"
+
     if has_arabic(text):
+        # Check if Arabic script contains distinct Moroccan Darija keywords (cleaned from punctuation)
+        darija_ar_keywords = {
+            "واش", "فين", "كيفاش", "علاش", "بغيت", "كاين", "كاينة", "ديال",
+            "شحال", "بزاف", "مزيان", "عافاك", "عفاك", "عندكم", "خويا", "بشحال",
+            "دابا", "واخا", "شي", "زوين", "هاد", "هادا", "هادي", "درهم", "لاباس", "سلام",
+        }
+        words_ar = set(re.findall(r'[\u0600-\u06FF]+', text))
+        if words_ar & darija_ar_keywords:
+            return "darija"
         return "ar"
 
-    words = set(re.findall(r"[a-z0-9']+", normalize_text(text)))
-    darija_signals = {
-        "chhal", "chnou", "wach", "wash", "fin", "kifach", "alach",
-        "bghit", "bgha", "andkom", "andek", "dial", "dyal", "hada",
-        "hadi", "kayn", "kayna", "momkin", "bla", "wla", "hta",
-        "lli", "chi", "taman", "mzyan", "khdam",
+    normalized = normalize_text(text)
+    words = set(re.findall(r"[a-z0-9'379]+", normalized))
+
+    # Moroccan Darija in Latin script (Arabizi / Darija)
+    # Strong single-word Darija indicators that unambiguously identify Darija (no English/French collisions)
+    strong_darija = {
+        "bghit", "3afak", "afak", "kifach", "dyal", "dial", "3ndkom", "andkom",
+        "kayn", "kayna", "bezzaf", "bzaf", "nsewlek", "mzyan", "chhal", "shhal",
+        "wach", "chnou", "chno", "khoya", "salam", "labas", "marhba", "merhba",
+        "wakha", "daba", "chouf", "drari", "walou",
     }
-    if len(words & darija_signals) >= 2:
-        return "darija"
+    darija_signals = strong_darija | {
+        "wash", "ach", "ash", "fin", "feen", "taman", "hadi", "hada", "momkin",
+        "bla", "wla", "hta", "lli", "chi", "khdam", "chwia", "koulchi",
+    }
 
     english_signals = {
         "do", "you", "have", "what", "how", "can", "is", "are", "the",
@@ -50,10 +67,46 @@ def detect_language(text):
         "please", "tell", "give", "get", "sell", "buy", "price", "cost",
         "available", "recommend", "best", "right", "help", "would", "like",
         "some", "about", "this", "that", "with", "from", "there", "still",
-        "also", "should", "could", "party",
+        "also", "should", "could", "party", "why", "who", "when", "doing",
+        "questions", "question", "difference", "between", "explain", "marriage",
+        "wedding", "lights", "light", "speaker", "speakers", "shipping",
+        "delivery", "stock", "product", "products", "thanks", "thank",
+        "hello", "hi", "hey", "yes", "no", "ok", "okay", "dont", "trouble",
+        "roadmap", "suit", "beams", "beam", "wash", "wall", "moving", "head",
     }
-    if len(words & english_signals) >= 2 or words & {"hello", "hi", "hey"}:
+    english_starters = {"hello", "hi", "hey", "thanks", "thank", "why", "how", "what", "where", "can", "could", "would", "do", "does", "is", "are"}
+
+    en_matches = len(words & english_signals)
+    fr_signals = {
+        "bonjour", "bonsoir", "salut", "merci", "svp", "prix", "combien",
+        "livraison", "est", "ce", "que", "je", "voudrais", "recherche",
+        "cherche", "pour", "une", "des", "les", "avec", "dans", "mariage",
+        "soiree", "difference", "entre", "pouvez", "vous", "avoir", "magasin",
+        "materiel", "garantie", "delai", "paiement", "compte", "mot", "passe",
+        "oublié", "oublie", "aidez", "moi", "quoi", "quel", "quelle", "quels",
+    }
+    fr_matches = len(words & fr_signals)
+
+    darija_matches = len(words & strong_darija)
+    all_darija = len(words & darija_signals)
+
+    # If there are clear Darija words and it's not predominantly English:
+    if (darija_matches >= 1 or all_darija >= 2) and (darija_matches >= en_matches or en_matches < 2):
+        return "darija"
+
+    if (words & english_starters and en_matches >= 1) or en_matches >= 2:
+        if en_matches >= fr_matches:
+            return "en"
+
+    if darija_matches >= 1 or all_darija >= 2:
+        return "darija"
+
+    if fr_matches >= 2 or words & {"bonjour", "bonsoir", "salut", "merci"}:
+        return "fr"
+
+    if en_matches > fr_matches:
         return "en"
+
     return "fr"
 
 
@@ -65,19 +118,61 @@ def extract_keywords(text):
     words = re.findall(r'\b\w{3,}\b', text.lower())
 
     stop_words = {
-        # English
+        # English — determiners, pronouns, prepositions, conjunctions
         'the', 'and', 'are', 'for', 'you', 'with', 'from', 'that', 'this',
         'have', 'has', 'had', 'what', 'where', 'when', 'how', 'who', 'why',
         'please', 'show', 'list', 'about', 'some', 'many', 'much', 'your',
+        'tell', 'info', 'information', 'details',
+        'not', 'but', 'also', 'just', 'only', 'very', 'really', 'quite',
+        'been', 'being', 'will', 'would', 'could', 'should', 'shall', 'might',
+        'may', 'can', 'did', 'does', 'done', 'got', 'get', 'gets',
+        'its', 'it', 'they', 'them', 'their', 'his', 'her', 'him',
+        'our', 'ours', 'yours', 'mine', 'myself', 'here', 'there',
+        'then', 'than', 'too', 'own', 'same', 'other', 'each', 'every',
+        'both', 'few', 'all', 'any', 'most', 'more', 'less',
+        'into', 'over', 'under', 'after', 'before', 'between',
+        'through', 'during', 'above', 'below', 'against', 'along',
+        # English — commerce / chatbot filler words
         'store', 'shop', 'website', 'item', 'items', 'product', 'products',
-        'tell', 'info', 'information', 'details', 'price', 'prices', 'cost',
-        'expensive', 'cheap', 'buy', 'purchase', 'order', 'sell', 'find', 'search',
-        # French
+        'price', 'prices', 'cost', 'costs',
+        'expensive', 'cheap', 'buy', 'purchase', 'order', 'sell',
+        'find', 'search', 'looking', 'look', 'want', 'need',
+        'like', 'would', 'could', 'still', 'already', 'anymore',
+        'offer', 'offers', 'available', 'inventory',
+        'machine', 'machines', 'equipment', 'device', 'devices',
+        'type', 'types', 'kind', 'kinds', 'sort', 'sorts',
+        'model', 'models', 'brand', 'brands',
+        # French — determiners, pronouns, prepositions, conjunctions
         'avez', 'avoir', 'vous', 'votre', 'vos', 'des', 'les', 'une', 'dans',
-        'pour', 'avec', 'materiel', 'materiels', 'matériel', 'matériels',
+        'pour', 'avec', 'sans', 'chez', 'entre', 'vers', 'depuis',
+        'materiel', 'materiels', 'mat\u00e9riel', 'mat\u00e9riels',
         'produit', 'produits', 'prix', 'disponible', 'disponibles',
         'est', 'que', 'qui', 'sur', 'pas', 'sont', 'mais', 'aussi',
-        'tout', 'tous', 'cette', 'ces', 'son', 'ses', 'nos',
+        'tout', 'tous', 'toute', 'toutes', 'cette', 'ces', 'son', 'ses', 'nos',
+        'encore', 'quand', 'quels', 'quel', 'quelle', 'quelles',
+        'machines', 'machine', 'appareil', 'appareils',
+        'bon', 'bons', 'bonne', 'bonnes', 'bien', 'mieux',
+        'comment', 'pourquoi', 'combien', 'quoi',
+        'donc', 'car', 'comme', 'avant', 'apres', 'pendant',
+        'peu', 'beaucoup', 'trop', 'tres', 'assez',
+        'autre', 'autres', 'meme', 'ainsi', 'cela', 'ceci',
+        'oui', 'non', 'peut', 'pouvoir', 'peuvent',
+        'fait', 'faire', 'etre', 'sera', 'serait', 'etait',
+        'ici', 'voila', 'voici', 'entre',
+        'mon', 'mes', 'ton', 'tes', 'leur', 'leurs', 'notre',
+        'lui', 'elle', 'eux', 'elles', 'ils', 'nous', 'moi', 'toi',
+        'suis', 'sommes', 'etes', 'etais', 'avons', 'ont', 'avait',
+        'veux', 'veut', 'vouloir', 'voudrais', 'voudrait',
+        'donne', 'donner', 'donnez',
+        'cherche', 'recherche', 'trouve', 'trouver', 'besoin',
+        'dit', 'dire', 'disent', 'parle', 'parler',
+        'faut', 'falloir', 'doit', 'devoir', 'devrait',
+        'voir', 'savoir', 'sait', 'connait', 'connaitre',
+        'existe', 'exister', 'reste', 'rester',
+        'prendre', 'prend', 'prenez', 'pris',
+        'mettre', 'met', 'mettez', 'mis',
+        'nom', 'liste', 'type', 'genre', 'sorte', 'modele',
+        'marque', 'gamme', 'serie', 'version', 'variante',
         # Arabic / Darija common stop words
         'هل', 'ما', 'هذا', 'هذه', 'من', 'في', 'على', 'إلى', 'عن',
         'أن', 'كان', 'لقد', 'هو', 'هي', 'نحن', 'أنا', 'أنت', 'كل',
@@ -85,6 +180,9 @@ def extract_keywords(text):
         'لماذا', 'أين', 'متى', 'ماذا', 'كم', 'أريد', 'يمكن', 'يمكنني',
         'واش', 'فين', 'كيفاش', 'علاش', 'شحال', 'بغيت', 'عندكم', 'عندك',
         'ممكن', 'بلا', 'ولا', 'حتى', 'ديال', 'لي', 'اللي', 'شي',
+        'هاد', 'هاذ', 'ديال', 'دي', 'ولا', 'يلا', 'إلا',
+        'واحد', 'شي', 'بحال', 'كيما', 'فاش', 'منين',
+        'عافاك', 'بغينا', 'بغيتي', 'كاين', 'كاينة',
     }
 
     return [word for word in words if word not in stop_words]
@@ -102,7 +200,7 @@ def extract_product_keywords(text):
     # Extract remaining individual words
     words = re.findall(r'[a-z0-9]+', normalized)
     stop_words = {
-        # French common words
+        # French — determiners, pronouns, prepositions, conjunctions
         "ce", "cet", "cette", "est", "que", "qui", "quoi", "et", "ou",
         "le", "la", "les", "des", "un", "une", "du", "de", "dans",
         "pour", "sur", "avec", "sans", "pas", "plus", "moins",
@@ -110,21 +208,57 @@ def extract_product_keywords(text):
         "votre", "notre", "leur", "leurs", "mon", "ma", "mes", "ton",
         "tout", "tous", "toute", "toutes", "autre", "autres",
         "quel", "quelle", "quels", "quelles", "comment", "pourquoi",
-        "encore", "aussi", "mais", "donc", "car", "ni", "bien",
+        "encore", "aussi", "mais", "donc", "car", "ni", "bien", "quand",
         "ici", "oui", "non", "tres", "trop", "assez", "peu",
         "avoir", "avez", "fait", "faire", "etre", "sont", "sera",
         "chez", "entre", "vers", "comme", "depuis", "avant", "apres",
+        "pendant", "beaucoup", "meme", "ainsi", "cela", "ceci",
+        "peut", "pouvoir", "peuvent", "faut", "falloir",
+        "doit", "devoir", "devrait",
+        "suis", "sommes", "etes", "etais", "avons", "ont", "avait",
+        "serait", "etait", "voila", "voici",
+        "lui", "elle", "eux",
+        "bon", "bons", "bonne", "bonnes", "mieux",
+        # French — chatbot / commerce filler
         "cherche", "recherche", "trouve", "trouver", "besoin", "veux",
-        "veut", "donne", "moi", "liste", "nom", "existe",
-        # English common words
+        "veut", "vouloir", "voudrais", "voudrait",
+        "donne", "donner", "donnez", "moi", "liste", "nom", "existe",
+        "voir", "savoir", "sait", "connait", "connaitre",
+        "prendre", "prend", "prenez", "pris",
+        "mettre", "met", "mettez", "mis",
+        "dit", "dire", "disent", "parle", "parler",
+        "reste", "rester", "exister",
+        "type", "genre", "sorte", "modele",
+        "marque", "gamme", "serie", "version", "variante",
+        "appareil", "appareils", "machine", "machines",
+        # English — determiners, pronouns, prepositions
         "what", "about", "do", "you", "have", "is", "are", "the",
         "can", "how", "where", "which", "any", "some", "this", "that",
         "product", "products", "please", "show", "find", "search",
         "still", "get", "need", "want", "looking", "for", "your",
         "much", "many", "more", "does", "there", "give", "tell",
+        "not", "but", "just", "only", "very", "really", "quite",
+        "been", "being", "will", "would", "could", "should",
+        "may", "might", "did", "done", "got", "gets",
+        "its", "they", "them", "their", "his", "her", "him",
+        "our", "ours", "yours", "mine", "here",
+        "then", "than", "too", "own", "same", "other",
+        "each", "every", "both", "few", "all", "most", "less",
+        "into", "over", "under", "after", "before", "between",
+        "through", "during", "above", "below", "against", "along",
+        "like", "already", "anymore",
+        "offer", "offers", "available", "inventory",
+        "machine", "machines", "equipment", "device", "devices",
+        "type", "types", "kind", "kinds", "sort", "sorts",
+        "model", "models", "brand", "brands",
         # Catalog / commerce stop words
         "inf", "ref", "reference", "produit", "disponible", "stock",
         "prix", "combien", "coute", "taman", "dyal", "dial",
+        # Darija (Latin) common stop words
+        "wach", "wash", "chnou", "chhal", "kifach", "alach",
+        "bghit", "bgha", "andkom", "andek", "hada", "hadi",
+        "kayn", "kayna", "momkin", "bla", "wla", "hta",
+        "lli", "chi", "mzyan", "khdam", "bezzaf",
     }
     filtered_words = [word for word in words if word not in stop_words]
     return ref_codes + filtered_words

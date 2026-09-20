@@ -31,6 +31,7 @@ if AI_PROVIDER == "mistral" or (MISTRAL_API_KEY and not AI_PROVIDER):
         openai_client = OpenAI(
             api_key=MISTRAL_API_KEY,
             base_url="https://api.mistral.ai/v1",
+            max_retries=0,  # Prevent SDK retries from tripling 429 requests
         )
         logger.info("Mistral API mode enabled (model: %s).", DEFAULT_MODEL)
     else:
@@ -105,24 +106,54 @@ def add_to_history(session_id, role, content):
 # System Prompt Builder
 # ---------------------------------------------------------------------------
 
-def build_system_prompt(product_context):
+def build_system_prompt(product_context, target_language=None):
     """Builds the full system prompt with store policies and product catalog."""
+    lang_names = {
+        "en": "English",
+        "fr": "French (Français)",
+        "ar": "Arabic (العربية)",
+        "darija": "Moroccan Darija (الدارجة المغربية)",
+    }
+    target_name = lang_names.get(target_language)
+
+    lang_priority_block = ""
+    if target_name:
+        if target_language == "darija":
+            lang_priority_block = (
+                "=== 🚨 MANDATORY LANGUAGE FOR THIS TURN: MOROCCAN DARIJA (الدارجة المغربية) 🚨 ===\n"
+                "• The customer is communicating in Moroccan Darija (الدارجة المغربية).\n"
+                "• You MUST formulate 100% of your response in Moroccan Darija (using Arabic letters like مرحبا، كاين، الثمن، ديال or Latin Arabizi like Marhba, kayn, taman, dial).\n"
+                "• ABSOLUTE RULE: DO NOT REPLY IN FRENCH. Never use French sentences when the customer writes in Darija.\n"
+                "• Use Moroccan Darija words: 'Marhba bik', 'kayn 3ndna', 'taman dialo', 'chhal bghiti', 'fih l-garanti', 'at-tawsil / livraison kayn'.\n\n"
+            )
+        else:
+            lang_priority_block = (
+                f"=== 🚨 MANDATORY LANGUAGE FOR THIS TURN: {target_name.upper()} 🚨 ===\n"
+                f"• The customer's current message is written in {target_name}.\n"
+                f"• You MUST formulate 100% of your response in {target_name}.\n"
+                f"• Even if earlier messages in the chat history were in French or another language, switch IMMEDIATELY to {target_name}.\n"
+                f"• Under NO circumstances should you reply in French when the customer wrote in {target_name}.\n\n"
+            )
+
     return (
         "You are 'SonoBot', the AI shopping assistant for **SonoLight**, a Moroccan online store "
         "specializing in professional lighting, DJ equipment, laser effects, and event gear.\n\n"
-
+        f"{lang_priority_block}"
         "=== LANGUAGE RULES (CRITICAL — ABSOLUTE HIGHEST PRIORITY) ===\n"
-        "• DETECT the language of the customer's LAST message and reply ENTIRELY in that SAME language.\n"
-        "• This is the #1 rule. It overrides ALL other instructions.\n"
+        "• Reply ENTIRELY in the customer's language.\n"
         "• If the customer writes in English → reply 100% in English. NOT a single French word.\n"
         "• If the customer writes in French → reply 100% in French.\n"
         "• If the customer writes in Arabic → reply 100% in Arabic.\n"
-        "• If the customer writes in Moroccan Darija (Latin or Arabic script) → reply in Darija.\n"
-        "• Only use French as a fallback when the language is truly ambiguous or unclear.\n"
+        "• If the customer writes in Moroccan Darija (Latin or Arabic script) → reply in Moroccan Darija.\n"
         "• NEVER mix two languages in one response.\n"
         "• The store policies and product catalog below are written in English for your reference, "
         "but you MUST translate them to the customer's language when responding.\n"
         "• Use MAD (درهم) as the currency.\n\n"
+
+        "=== SPEED & CONCISENESS RULES (CRITICAL FOR PERFORMANCE) ===\n"
+        "• Be DIRECT, CONCISE, and FAST: Keep responses under 100–160 words (2–4 short paragraphs or bullet points maximum).\n"
+        "• Do NOT write gigantic essays, exhaustive manuals, or repeating disclaimers.\n"
+        "• Give clear, punchy recommendations, mention the exact price in MAD, and ask ONE focused follow-up question.\n\n"
 
         "=== STORE INFO ===\n"
         "Location: Agadir, Morocco\n\n"
@@ -148,8 +179,8 @@ def build_system_prompt(product_context):
 
         "=== PASSWORD RESET ===\n"
         "If the customer forgot their password, guide them to:\n"
-        "  1. Go to the SonoLight website and click 'Mon compte' / 'حسابي'\n"
-        "  2. Click 'Mot de passe oublié' / 'نسيت كلمة المرور'\n"
+        "  1. Go to the SonoLight website and click 'Mon compte' / 'حسابي' / 'My Account'\n"
+        "  2. Click 'Mot de passe oublié' / 'نسيت كلمة المرور' / 'Forgot password'\n"
         "  3. Enter their email to receive a reset link\n"
         "  4. If that doesn't work, contact support via email or WhatsApp\n\n"
 
@@ -163,25 +194,23 @@ def build_system_prompt(product_context):
         "2. If a product is out of stock (Stock: 0), inform the customer and suggest similar items from the catalog.\n"
         "3. If the requested product is not in the catalog, politely say it's not currently available and suggest what we do have.\n"
         "4. For store policy questions (delivery, payment, returns, contact): use ONLY the STORE POLICIES section above. "
-        "Do NOT invent shipping prices, store addresses, or cities. If you don't know, say 'contactez notre support'.\n"
+        "Do NOT invent shipping prices, store addresses, or cities. If you don't know, say contact our support.\n"
         "5. For off-topic questions (jokes, weather, general knowledge): politely and warmly decline, "
         "saying you're specialized in SonoLight products, but do it with a friendly tone — not robotic.\n"
         "6. For promotions/discounts: if none are in the catalog, say there are no active promotions "
         "but invite the customer to follow SonoLight on social media for upcoming deals.\n"
-        "7. Keep answers friendly, professional, warm, and concise (3-5 sentences max for simple questions, "
-        "up to 15 lines for detailed product comparisons).\n"
+        "7. Keep answers friendly, professional, warm, and concise (maximum 150 words).\n"
         "8. Add relevant emojis sparingly for a warm feel (😊, 🎵, 💡, 🚚, ✅).\n"
         "9. Always end with an offer to help further.\n"
         "10. NEVER mention or share website URLs or links in your responses.\n"
         "11. NEVER fabricate information. If you don't have specific data, say you don't have that info and suggest contacting support.\n"
-        "12. If a product's price is 0.00 MAD or missing, say 'Prix sur demande' and invite the customer "
+        "12. If a product's price is 0.00 MAD or missing, say 'Prix sur demande' / 'Price on request' and invite the customer "
         "to contact support for a personalized quote. Do NOT say 'gratuit' or 'free'.\n"
         "13. When a customer asks about ordering, payments, or delivery, answer their question directly "
         "with clear step-by-step instructions. Do NOT list products unless they specifically asked for a product list.\n"
-        "14. FOLLOW-UP QUESTIONS: When a customer asks a short follow-up like 'son prix?', 'combien?', 'et le stock?', "
+        "14. FOLLOW-UP QUESTIONS: When a customer asks a short follow-up like 'son prix?', 'how much?', 'combien?', 'et le stock?', "
         "look at the conversation history to identify which product they are referring to. "
-        "Then answer with the EXACT data from the PRODUCT CATALOG section above for that specific product. "
-        "Do NOT answer with data from other products.\n"
+        "Then answer with the EXACT data from the PRODUCT CATALOG section above for that specific product.\n"
         "15. REFERENCE CODES: Products have reference codes (SKU) like INF-SM470, INF-BM380. "
         "When a customer asks about a reference code, match it to the product in the catalog and answer about that specific product.\n"
         "\n"
@@ -190,31 +219,26 @@ def build_system_prompt(product_context):
         "NEVER use Markdown headers (#, ##, ###, ####). They render as raw text.\n"
         "NEVER use horizontal rules (---).\n"
         "ONLY USE these formatting elements:\n"
-        "  - **bold text** for emphasis and section titles\n"
+        "  - **bold text** for emphasis and section titles (translated to the customer's language)\n"
         "  - Bullet points (- item) for lists\n"
         "  - Emojis for visual warmth\n"
         "  - Line breaks for spacing\n"
         "\n"
-        "For PRODUCT COMPARISONS, use this exact format (one characteristic at a time, both products below it):\n"
+        "For PRODUCT COMPARISONS, use this clean format (translate titles to customer language):\n"
         "\n"
-        "**💡 Puissance**\n"
-        "- Produit A : 380W\n"
-        "- Produit B : 240W total\n"
+        "**💡 Power / Puissance / القوة**\n"
+        "- Product A : 380W\n"
+        "- Product B : 240W total\n"
         "\n"
-        "**🎨 Effets lumineux**\n"
-        "- Produit A : Beam, Spot, Wash, prismes, gobos\n"
-        "- Produit B : RGBW, modes basiques\n"
+        "**🎨 Lighting Effects / Effets lumineux / التأثيرات**\n"
+        "- Product A : Beam, Spot, Wash, prisms, gobos\n"
+        "- Product B : RGBW, basic modes\n"
         "\n"
-        "**🛡️ Protection**\n"
-        "- Produit A : IP20 (intérieur uniquement)\n"
-        "- Produit B : IP65 (extérieur, pluie, poussière)\n"
+        "**🛡️ Protection / الحماية**\n"
+        "- Product A : IP20 (indoor only)\n"
+        "- Product B : IP65 (outdoor, rain, dust)\n"
         "\n"
-        "End with a clear **🎯 Verdict** section advising which product fits which use case.\n"
-        "\n"
-        "=== FINAL REMINDER (CRITICAL) ===\n"
-        "Before sending your response, CHECK: is your response written in the SAME language as the customer's message?\n"
-        "If the customer wrote in English and your response contains French, REWRITE it entirely in English.\n"
-        "If the customer wrote in Arabic/Darija and your response contains French, REWRITE it in Arabic/Darija.\n"
+        "End with a clear **🎯 Verdict** advising which product fits the use case.\n"
     )
 
 
@@ -222,7 +246,7 @@ def build_system_prompt(product_context):
 # Chat Completion
 # ---------------------------------------------------------------------------
 
-def chat_completion(user_message, product_context, session_id=None):
+def chat_completion(user_message, product_context, session_id=None, target_language=None):
     """Calls the AI API with conversation history and returns the reply.
 
     Returns:
@@ -240,7 +264,7 @@ def chat_completion(user_message, product_context, session_id=None):
     if _request_counter % 20 == 0:
         _cleanup_expired_sessions()
 
-    system_prompt = build_system_prompt(product_context)
+    system_prompt = build_system_prompt(product_context, target_language=target_language)
 
     # Build messages list with history
     messages = [{"role": "system", "content": system_prompt}]
@@ -249,21 +273,42 @@ def chat_completion(user_message, product_context, session_id=None):
         history = get_history(session_id)
         messages.extend(history)
 
-    messages.append({"role": "user", "content": user_message})
+    # To break LLM history priming (language inertia), append a clear language directive to the user turn:
+    lang_map = {
+        "en": "English",
+        "fr": "French",
+        "ar": "Arabic",
+        "darija": "Moroccan Darija",
+    }
+    target_name = lang_map.get(target_language)
+    if target_name:
+        if target_language == "darija":
+            lang_note = "Reply strictly in Moroccan Darija (الدارجة المغربية / Darija). Do NOT reply in French under any circumstances."
+        else:
+            lang_note = f"Reply strictly in {target_name}. Do NOT use French or mix languages."
+        prompt_user_content = (
+            f"{user_message}\n\n"
+            f"[System note: {lang_note}]"
+        )
+    else:
+        prompt_user_content = user_message
 
-    max_retries = 2
+    messages.append({"role": "user", "content": prompt_user_content})
+
+    max_retries = 3
     for attempt in range(max_retries):
         try:
+            # max_tokens=650 ensures snappy, responsive replies (1-2s instead of 7-10s)
             completion = openai_client.chat.completions.create(
                 model=DEFAULT_MODEL,
                 messages=messages,
-                max_tokens=2048,
+                max_tokens=650,
                 temperature=0.7,
             )
 
             reply = completion.choices[0].message.content.strip()
 
-            # Save to history
+            # Save clean user message to history
             if session_id:
                 add_to_history(session_id, "user", user_message)
                 add_to_history(session_id, "assistant", reply)
@@ -275,7 +320,7 @@ def chat_completion(user_message, product_context, session_id=None):
             logger.error("AI API error (attempt %d/%d): %s", attempt + 1, max_retries, e)
 
             if "429" in error_str and attempt < max_retries - 1:
-                wait_time = (attempt + 1) * 20
+                wait_time = 30 * (attempt + 1)  # 30s, 60s
                 logger.warning("Rate limited. Waiting %ds before retry...", wait_time)
                 time.sleep(wait_time)
                 continue

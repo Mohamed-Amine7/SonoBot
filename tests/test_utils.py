@@ -49,12 +49,20 @@ class TestHasArabic:
 class TestDetectLanguage:
     def test_english(self):
         assert detect_language("Show me something good for a party") == "en"
+        assert detect_language("how are you doing") == "en"
+        assert detect_language("could you explain the difference between Beams, Wall Wash") == "en"
+        assert detect_language("why you speak in french") == "en"
 
     def test_arabic(self):
         assert detect_language("ساعدني أختار منتجًا للحفلة") == "ar"
 
+    def test_darija(self):
+        assert detect_language("3afak bghit nsewlek") == "darija"
+        assert detect_language("chhal taman dial hada") == "darija"
+
     def test_french_fallback(self):
         assert detect_language("Aidez-moi à choisir") == "fr"
+        assert detect_language("bonjour je cherche un laser") == "fr"
 
 
 class TestExtractKeywords:
