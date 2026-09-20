@@ -126,11 +126,29 @@ def search_database(user_message):
                         params.extend([pattern, pattern, pattern, pattern])
                     else:
                         params.extend([pattern, pattern, pattern])
-                base_query += " AND (" + " OR ".join(conditions) + ")"
 
-            query = base_query + catalog_group_order_sql() + " LIMIT %s"
-            cursor.execute(query, [*params, 10 if keywords else 5])
-            products = cursor.fetchall()
+                # Use AND between keywords for precision when multiple keywords exist
+                if len(conditions) > 1:
+                    query_and = base_query + " AND (" + " AND ".join(conditions) + ")"
+                    query_and += catalog_group_order_sql() + " LIMIT %s"
+                    cursor.execute(query_and, [*params, 10])
+                    products = cursor.fetchall()
+
+                    # Fallback to OR if AND returns nothing
+                    if not products:
+                        query_or = base_query + " AND (" + " OR ".join(conditions) + ")"
+                        query_or += catalog_group_order_sql() + " LIMIT %s"
+                        cursor.execute(query_or, [*params, 10])
+                        products = cursor.fetchall()
+                else:
+                    base_query += " AND (" + " OR ".join(conditions) + ")"
+                    query = base_query + catalog_group_order_sql() + " LIMIT %s"
+                    cursor.execute(query, [*params, 10])
+                    products = cursor.fetchall()
+            else:
+                query = base_query + catalog_group_order_sql() + " LIMIT %s"
+                cursor.execute(query, [*params, 5])
+                products = cursor.fetchall()
 
             # Do not fall back to arbitrary catalogue entries when the request
             # has meaningful keywords but none match.  That made questions such

@@ -107,13 +107,13 @@ CORS_ORIGINS = os.getenv("CORS_ORIGINS", "*").strip()
 # Rate limiting: requests per minute on /api/chat
 RATE_LIMIT = os.getenv("RATE_LIMIT", "30/minute")
 
-# AI conversation history: max messages to keep per session
-MAX_HISTORY_MESSAGES = int(os.getenv("MAX_HISTORY_MESSAGES", 10))
+# AI conversation history: max messages to keep per session (4 messages = 2 turns, optimal for low latency)
+MAX_HISTORY_MESSAGES = int(os.getenv("MAX_HISTORY_MESSAGES", 4))
 SESSION_TIMEOUT_MINUTES = int(os.getenv("SESSION_TIMEOUT_MINUTES", 30))
 
 # AI model defaults per provider
 DEFAULT_MODELS = {
-    "mistral": os.getenv("AI_MODEL", "mistral-small-latest"),
+    "mistral": os.getenv("AI_MODEL", "open-mistral-nemo"),
     "openrouter": os.getenv("AI_MODEL", "openrouter/free"),
     "groq": os.getenv("AI_MODEL", "llama-3.3-70b-versatile"),
     "gemini": os.getenv("AI_MODEL", "gemini-2.0-flash"),

@@ -120,11 +120,23 @@ def build_system_prompt(product_context, target_language=None):
     if target_name:
         if target_language == "darija":
             lang_priority_block = (
-                "=== 🚨 MANDATORY LANGUAGE FOR THIS TURN: MOROCCAN DARIJA (الدارجة المغربية) 🚨 ===\n"
+                "=== 🚨 MANDATORY LANGUAGE FOR THIS TURN: AUTHENTIC MOROCCAN DARIJA (الدارجة المغربية) 🚨 ===\n"
                 "• The customer is communicating in Moroccan Darija (الدارجة المغربية).\n"
-                "• You MUST formulate 100% of your response in Moroccan Darija (using Arabic letters like مرحبا، كاين، الثمن، ديال or Latin Arabizi like Marhba, kayn, taman, dial).\n"
-                "• ABSOLUTE RULE: DO NOT REPLY IN FRENCH. Never use French sentences when the customer writes in Darija.\n"
-                "• Use Moroccan Darija words: 'Marhba bik', 'kayn 3ndna', 'taman dialo', 'chhal bghiti', 'fih l-garanti', 'at-tawsil / livraison kayn'.\n\n"
+                "• You MUST formulate your response in 100% authentic Moroccan Darija (preferably in Arabic letters, or clean Latin text).\n"
+                "• ⛔ STRICTLY FORBIDDEN: DO NOT use Egyptian, Levantine, or Gulf Arabic. NEVER use words like '3ayza', '3ayez', 'shoo', 'baddi', 'keda', 'dilwa'ti', 'eh'.\n"
+                "• ⛔ STRICTLY FORBIDDEN: DO NOT reply in French.\n"
+                "• ✅ AUTHENTIC MOROCCAN VOCABULARY TO USE:\n"
+                "  - 'bghiti' / 'bghit' (بغيتي / بغيت) — NEVER '3ayza'\n"
+                "  - 'khassek' (خاصك) — what you need\n"
+                "  - 'kayn' / 'kayna' (كاين / كاينة) — available in stock\n"
+                "  - 'dyal' / 'dial' (ديال) — of / for\n"
+                "  - 'chhal' (شحال) — how much / how many\n"
+                "  - 'taman' (الثمن) — price\n"
+                "  - 'mzyan' (مزيان) — good / great\n"
+                "  - 'l-3rassat' (الأعراس / العراسات) — weddings\n"
+                "  - 'at-tawsil' / 'livraison' (التوصيل) — delivery across Morocco (Agadir 35–50 DH, other cities 55–80 DH)\n"
+                "  - 'ad-daf3 3inda l-istilam' (الدفع عند الاستلام) — Cash on Delivery\n"
+                "• Keep the answer short, warm, and natural (2–4 lines).\n\n"
             )
         else:
             lang_priority_block = (
@@ -283,7 +295,12 @@ def chat_completion(user_message, product_context, session_id=None, target_langu
     target_name = lang_map.get(target_language)
     if target_name:
         if target_language == "darija":
-            lang_note = "Reply strictly in Moroccan Darija (الدارجة المغربية / Darija). Do NOT reply in French under any circumstances."
+            lang_note = (
+                "Reply strictly in authentic Moroccan Darija (الدارجة المغربية). "
+                "FORBIDDEN: Do NOT use Egyptian words (NEVER say 3ayza, 3ayez, shoo, baddi). "
+                "Use true Moroccan words: bghiti (NOT 3ayza), khassek, kayn, dyal, chhal, mzyan. "
+                "Do NOT reply in French."
+            )
         else:
             lang_note = f"Reply strictly in {target_name}. Do NOT use French or mix languages."
         prompt_user_content = (
@@ -298,12 +315,12 @@ def chat_completion(user_message, product_context, session_id=None, target_langu
     max_retries = 3
     for attempt in range(max_retries):
         try:
-            # max_tokens=650 ensures snappy, responsive replies (1-2s instead of 7-10s)
+            # max_tokens=320 ensures instant, snappy replies (around 1.0-1.5s)
             completion = openai_client.chat.completions.create(
                 model=DEFAULT_MODEL,
                 messages=messages,
-                max_tokens=650,
-                temperature=0.7,
+                max_tokens=320,
+                temperature=0.6,
             )
 
             reply = completion.choices[0].message.content.strip()
@@ -320,8 +337,9 @@ def chat_completion(user_message, product_context, session_id=None, target_langu
             logger.error("AI API error (attempt %d/%d): %s", attempt + 1, max_retries, e)
 
             if "429" in error_str and attempt < max_retries - 1:
-                wait_time = 30 * (attempt + 1)  # 30s, 60s
-                logger.warning("Rate limited. Waiting %ds before retry...", wait_time)
+                # Fast burst backoff (1.5s, 3s) instead of 30s lockup
+                wait_time = 1.5 * (attempt + 1)
+                logger.warning("Rate limited. Waiting %.1fs before retry...", wait_time)
                 time.sleep(wait_time)
                 continue
 
